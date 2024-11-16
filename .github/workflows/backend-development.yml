@@ -1,0 +1,56 @@
+name: Deploy to Glesys STAGE
+
+on:
+  workflow_call:
+    inputs:
+      hostname:
+        required: true
+        type: string
+        description: "The hostname for the server"
+      user:
+        required: true
+        type: string
+        description: "The user for SSH"
+      target:
+        required: true
+        type: string
+        description: "The target environment"
+      destination:
+        required: true
+        type: string
+        description: "Destination path on the server"
+      fingerprint:
+        required: true
+        type: string
+        description: "SSH fingerprint"
+      pm2_name:
+        required: true
+        type: string
+        description: "Name for the pm2 process"
+      mode:
+        required: true
+        type: string
+        description: "The mode for the deployment"
+    secrets:
+      password:
+        required: true
+      dotenv_key:
+        required: true
+      dotenv_me:
+          required: true
+
+jobs:
+  deploy:
+    uses: 'sakshi-devotess/github-action/.github/workflows/deploy-backend.yml@main'
+    with:
+      hostname: ${{ inputs.hostname }}
+      user: ${{ inputs.user }}
+      target: ${{ inputs.target }}
+      destination: ${{ inputs.destination }}
+      fingerprint: ${{ inputs.fingerprint }}
+      pm2_name: ${{ inputs.pm2_name }}
+      mode: ${{ inputs.mode }}
+    secrets:
+      password: ${{ secrets.password }}
+      dotenv_key: ${{ secrets.dotenv_key }} 
+      dotenv_me: ${{ secrets.dotenv_me }}
