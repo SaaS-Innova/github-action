@@ -1,0 +1,90 @@
+name: 'Test build app'
+
+on:
+  workflow_call: # Allows this workflow to be called from other repositories
+    inputs: # Define dynamic variables to accept from caller
+      node_version:
+        description: 'Node.js version'
+        required: true
+        type: string
+      db_username:
+        description: 'Database username'
+        required: true
+        type: string
+      db_password:
+        description: 'Database password'
+        required: true
+        type: string
+      db_host:
+        description: 'Database host'
+        required: true
+        type: string
+      db_port:
+        description: 'Database port'
+        required: true
+        type: string
+      db_name:
+        description: 'Database name'
+        required: true
+        type: string
+      max_old_space_size:
+          description: 'Maximum old space size for Node.js'
+          required: true
+          type: string
+
+jobs:
+  test-build:
+    runs-on: ubuntu-22.04
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: ${{ inputs.db_password }}
+          POSTGRES_USER: ${{ inputs.db_username }}
+          POSTGRES_DB: ${{ inputs.db_name }}
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - ${{ inputs.db_port }}:5432
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        id: install-node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ inputs.node_version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Build
+        run: npm run build
+
+      - name: Run the database migrations
+        env:
+          DB_USERNAME: ${{ inputs.db_username }}
+          DB_PASSWORD: ${{ inputs.db_password }}
+          DB_HOST: ${{ inputs.db_host }}
+          DB_PORT: ${{ inputs.db_port }}
+          DB_DATABASE: ${{ inputs.db_name }}
+          TEST_DB_DATABASE: ${{ inputs.db_name }}
+        run: npm run migration:run
+
+      - name: Run the tests
+        if: ${{ github.base_ref == 'main' }}
+        env:
+          NODE_OPTIONS: '--max_old_space_size=${{ inputs.max_old_space_size }}'
+          DB_USERNAME: ${{ inputs.db_username }}
+          DB_PASSWORD: ${{ inputs.db_password }}
+          DB_HOST: ${{ inputs.db_host }}
+          DB_PORT: ${{ inputs.db_port }}
+          DB_DATABASE: ${{ inputs.db_name }}
+          TEST_DB_DATABASE: ${{ inputs.db_name }}
+        run: npm run test:prod
