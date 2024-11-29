@@ -3,10 +3,6 @@ name: Add Label Auto-Update to New Pull Request
 on:
   workflow_call:  # Makes the workflow reusable
     inputs:
-      branch:
-        description: 'Target branch for the pull request'
-        required: true
-        type: string
       label:
         description: 'Label to add to the pull request'
         required: true
