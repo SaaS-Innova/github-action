@@ -6,10 +6,9 @@ on:
         required: true
         type: string
         description: "Comma-separated list of reviewers"
+    secrets:
       token:
         required: true
-        type: string
-        description: "GitHub token for authentication"
 
 jobs:
   add-reviewers:
@@ -19,5 +18,5 @@ jobs:
         uses: buzato/add-reviewer-gh-action@1.0.5
         with:
           reviewers: ${{ inputs.reviewers }}
-          token: ${{ inputs.token }}
+          token: ${{ secrets.token }}
 
