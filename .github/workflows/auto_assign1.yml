@@ -1,0 +1,23 @@
+name: 'Auto Assign'
+on:
+  workflow_call:
+    inputs:
+      reviewers:
+        required: true
+        type: string
+        description: "Comma-separated list of reviewers"
+      token:
+        required: true
+        type: string
+        description: "GitHub token for authentication"
+
+jobs:
+  add-reviewers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add Reviewers
+        uses: buzato/add-reviewer-gh-action@1.0.5
+        with:
+          reviewers: ${{ inputs.reviewers }}
+          token: ${{ inputs.token }}
+
