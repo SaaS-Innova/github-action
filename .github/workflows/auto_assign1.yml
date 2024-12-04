@@ -6,20 +6,29 @@ on:
         required: true
         type: string
         description: "Comma-separated list of reviewers"
-    secrets:
-      token:
-        required: true
-
-permissions:
-  pull-requests: write
 
 jobs:
-  add-reviewers:
+  assign-reviewers:
     runs-on: ubuntu-latest
+    permissions: write-all
     steps:
-      - name: Add Reviewers
-        uses: buzato/add-reviewer-gh-action@1.0.5
-        with:
-          reviewers: ${{ inputs.reviewers }}
-          token: ${{ secrets.token }}
+    - name: Assign Reviewers
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const reviewers = ${{ inputs.reviewers }}.split(','); 
+          await github.rest.pulls.requestReviewers({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.payload.pull_request.number,
+            reviewers: reviewers,
+          });
+  # add-reviewers:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Add Reviewers
+  #       uses: buzato/add-reviewer-gh-action@1.0.5
+  #       with:
+  #         reviewers: ${{ inputs.reviewers }}
+  #         token: ${{ secrets.token }}
 
