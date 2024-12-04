@@ -2,16 +2,26 @@ name: 'Auto Assign'
 on:
   workflow_call:
     inputs:
-      configuration_path:
+      reviewers:
         required: true
         type: string
-        description: ""
+        description: "Comma-separated list of reviewers"
 
 jobs:
-  add-reviews:
+  assign-reviewers:
     runs-on: ubuntu-latest
     steps:
-      - uses: kentaro-m/auto-assign-action@v1.2.5
-        with:
-          configuration-path: ${{ inputs.configuration_path }}
+    - name: Assign Reviewers
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const reviewers = "${{ inputs.reviewers }}".split(',').map(r => r.trim()); // Parse input
+          console.log("Reviewers to assign:", reviewers);
+          await github.rest.pulls.requestReviewers({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.payload.pull_request.number,
+            reviewers: reviewers,
+          });
+  
 
