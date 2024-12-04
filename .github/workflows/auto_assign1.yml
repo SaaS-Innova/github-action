@@ -15,8 +15,7 @@ jobs:
       uses: actions/github-script@v6
       with:
         script: |
-          const reviewers = "${{ inputs.reviewers }}".split(',').map(r => r.trim()); // Ensure array format
-            
+          const reviewers = "${{ inputs.reviewers }}".split(',').map(r => r.trim()); // Parse input
           console.log("Reviewers to assign:", reviewers);
           await github.rest.pulls.requestReviewers({
             owner: context.repo.owner,
@@ -24,12 +23,5 @@ jobs:
             pull_number: context.payload.pull_request.number,
             reviewers: reviewers,
           });
-  # add-reviewers:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Add Reviewers
-  #       uses: buzato/add-reviewer-gh-action@1.0.5
-  #       with:
-  #         reviewers: ${{ inputs.reviewers }}
-  #         token: ${{ secrets.token }}
+  
 
