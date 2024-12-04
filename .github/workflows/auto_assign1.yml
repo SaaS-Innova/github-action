@@ -15,7 +15,9 @@ jobs:
       uses: actions/github-script@v6
       with:
         script: |
-          const reviewers = ${{ inputs.reviewers }}.split(','); 
+          const reviewers = "${{ inputs.reviewers }}".split(',').map(r => r.trim()); // Ensure array format
+            
+          console.log("Reviewers to assign:", reviewers);
           await github.rest.pulls.requestReviewers({
             owner: context.repo.owner,
             repo: context.repo.repo,
