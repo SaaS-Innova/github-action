@@ -22,7 +22,6 @@ on:
 
 jobs:
     auto-update:
-        permissions: write-all
         runs-on: ubuntu-latest
         steps:
             - name: Check Out Code
