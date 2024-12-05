@@ -43,7 +43,7 @@ jobs:
 
                   echo "Iterating through pull requests to find the one with the ${{ inputs.label_name }} label"
                   oldest_pr_head_branch=""
-               
+
                   for pr_number in $(echo "$oldest_pr_data" | jq -r '.[].number'); do
                     echo "Fetching labels for pull request #$pr_number"
                     labels=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
@@ -62,7 +62,7 @@ jobs:
                       pr_state=$(echo "$pr_data" | jq -r '.state')
                       pr_auto_merge=$(echo "$pr_data" | jq -r '.auto_merge // empty')
 
-                      if [[ "$pr_state" == "open" ]]; then
+                      if [[ "$pr_state" == "open" && -n "$pr_auto_merge" ]]; then
                         echo "PR #$pr_number satisfies all conditions (.state == 'open' and .auto_merge enabled)"
                         oldest_pr_head_branch=$(echo "$pr_data" | jq -r '.head.ref')
                         break
@@ -121,3 +121,4 @@ jobs:
                   fi
                   echo "Completed..."
                   exit 0
+
