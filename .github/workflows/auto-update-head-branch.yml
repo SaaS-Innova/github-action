@@ -43,8 +43,8 @@ jobs:
 
                   echo "Iterating through pull requests to find the one with the ${{ inputs.label_name }} label"
                   oldest_pr_head_branch=""
-                  echo "$oldest_pr_data" | jq '.[]'
-                  for pr_number in $(echo "$oldest_pr_data" | jq -r '.[].number'); do
+               
+                  for pr_number in $(echo "$oldest_pr_data" | jq -r '.[]'); do
                     echo "Fetching labels for pull request #$pr_number"
                     labels=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
                       "https://api.github.com/repos/$GITHUB_REPOSITORY/issues/$pr_number/labels" | jq -r '.[].name')
