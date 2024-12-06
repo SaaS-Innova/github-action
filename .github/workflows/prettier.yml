@@ -9,6 +9,10 @@ on:
         required: false
         default: '--check **/*.tsx'
         type: string
+    secrets:
+      token:
+        description: 'Token to use for GitHub API'
+        required: true
 
 jobs:
   prettier:
