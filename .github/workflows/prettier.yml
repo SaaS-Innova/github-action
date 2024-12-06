@@ -20,6 +20,14 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.head_ref }}
 
+      - name: Check Branch Protection
+        uses: 'SaaS-Innova/github-action@main'
+        with:
+          repository: ${{ github.repository }}
+          # job_name: 'prettier'
+          token: ${{ secrets.token }}
+          branches: 'main,development'
+
       - name: Prettify code
         uses: creyD/prettier_action@v4.3
         with:
