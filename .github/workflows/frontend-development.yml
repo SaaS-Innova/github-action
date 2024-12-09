@@ -28,8 +28,8 @@ on:
         type: string
         description: "Name for the pm2 process"
       build_dir:
+        required: true
         type: string
-        required: false
         default: './build'
     secrets:
       password:
