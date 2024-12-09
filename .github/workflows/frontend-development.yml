@@ -30,7 +30,7 @@ on:
       build_dir:
         required: true
         type: string
-        default: './build'
+        description: "The directory where the build files are located"
     secrets:
       password:
         required: true
