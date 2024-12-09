@@ -22,7 +22,7 @@ on:
             pm2_name:
                 type: string
                 required: true
-            build_dir:
+            build_dirpath:
                 type: string
                 required: true
         secrets:
