@@ -25,7 +25,6 @@ on:
             build_dir:
                 type: string
                 required: false
-                default: './build'
         secrets:
             dotenv_key:
                 required: true
