@@ -11,6 +11,10 @@ on:
         required: true
         type: string
         description: 'The public URL for the React app'
+      document_server_url:
+        required: false
+        type: string
+        description: 'The Document Server URL (optional)'
 
 jobs:
   test-build:
@@ -22,6 +26,9 @@ jobs:
         run: |
           echo "REACT_APP_GRAPHQL_URL=${{ inputs.graphql_url }}" > .env
           echo "REACT_APP_PUBLIC_URL=${{ inputs.public_url }}" >> .env
+          if [ -n "${{ inputs.document_server_url }}" ]; then
+            echo "REACT_APP_DOCUMENT_SERVER_URL=${{ inputs.document_server_url }}" >> .env
+          fi
 
       - name: Setup Node.js 20
         id: install-node
