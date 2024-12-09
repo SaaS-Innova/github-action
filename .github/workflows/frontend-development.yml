@@ -27,10 +27,11 @@ on:
         required: true
         type: string
         description: "Name for the pm2 process"
-      build_dirpath:
-        required: true
+      build_path:
+        required: false
         type: string
-        description: "The directory where the build files are located"
+        description: "Path to the project"
+        default: 'build'
     secrets:
       password:
         required: true
@@ -47,7 +48,7 @@ jobs:
       destination: ${{ inputs.destination }}
       fingerprint: ${{ inputs.fingerprint }}
       pm2_name: ${{ inputs.pm2_name }}
-      build_dirpath: ${{ inputs.build_dirpath }}
+      build_path: ${{ inputs.build_path }}
     secrets:
       password: ${{ secrets.password }}
       dotenv_key: ${{ secrets.dotenv_key }} 
