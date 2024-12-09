@@ -22,6 +22,10 @@ on:
             pm2_name:
                 type: string
                 required: true
+            build_dir:
+                type: string
+                required: false
+                default: './build'
         secrets:
             dotenv_key:
                 required: true
@@ -51,7 +55,7 @@ jobs:
                 DOTENV_KEY: ${{ secrets.DOTENV_KEY }}
                   
             - name: Compress Repository
-              run: zip -r repo.zip ./build
+              run: zip -r repo.zip ${{ inputs.BUILD_DIR }}
 
             - name: Activate ssh-agent
               run: |
