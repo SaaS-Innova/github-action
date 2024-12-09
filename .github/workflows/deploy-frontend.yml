@@ -54,7 +54,7 @@ jobs:
                 DOTENV_KEY: ${{ secrets.DOTENV_KEY }}
                   
             - name: Compress Repository
-              run: zip -r repo.zip ./${{ inputs.BUILD_PATH }}
+              run: zip -r repo.zip ./dist
 
             - name: Activate ssh-agent
               run: |
