@@ -24,7 +24,7 @@ on:
                 required: true
             build_dir:
                 type: string
-                required: false
+                required: true
         secrets:
             dotenv_key:
                 required: true
