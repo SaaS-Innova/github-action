@@ -31,7 +31,7 @@ on:
         required: false
         type: string
         description: "Path to the project"
-        default: 'build'
+        default: 'dist'
     secrets:
       password:
         required: true
