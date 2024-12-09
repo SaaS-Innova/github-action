@@ -41,7 +41,7 @@ on:
 
 jobs:
   deploy:
-    uses: 'sakshi-devotess/github-action/.github/workflows/deploy-backend.yml@main'
+    uses: 'SaaS-Innova/github-action/.github/workflows/deploy-backend.yml@main'
     with:
       hostname: ${{ inputs.hostname }}
       user: ${{ inputs.user }}

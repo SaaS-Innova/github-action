@@ -31,7 +31,7 @@ on:
         required: false
         type: string
         description: "Path to the project"
-        default: 'dist'
+        default: 'build'
     secrets:
       password:
         required: true
@@ -40,7 +40,7 @@ on:
 
 jobs:
   deploy:
-    uses: 'sakshi-devotess/github-action/.github/workflows/deploy-frontend.yml@main'
+    uses: 'SaaS-Innova/github-action/.github/workflows/deploy-frontend.yml@main'
     with:
       hostname: ${{ inputs.hostname }}
       user: ${{ inputs.user }}
