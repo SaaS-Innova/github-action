@@ -47,8 +47,7 @@ jobs:
       destination: ${{ inputs.destination }}
       fingerprint: ${{ inputs.fingerprint }}
       pm2_name: ${{ inputs.pm2_name }}
-      build_dir: ${{ inputs.build_dir }}
-
+      build_dir: './dist'
     secrets:
       password: ${{ secrets.password }}
       dotenv_key: ${{ secrets.dotenv_key }} 
