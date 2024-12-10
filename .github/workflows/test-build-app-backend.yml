@@ -51,6 +51,16 @@ jobs:
         ports:
           - ${{ inputs.db_port }}:5432
 
+      redis:
+        image: redis
+        options: >-
+          --health-cmd "redis-cli ping || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
     steps:
       - uses: actions/checkout@v3
 
@@ -87,4 +97,7 @@ jobs:
           DB_PORT: ${{ inputs.db_port }}
           DB_DATABASE: ${{ inputs.db_name }}
           TEST_DB_DATABASE: ${{ inputs.db_name }}
+          REDIS_HOST: ${{ inputs.db_host }}
+          REDIS_PORT: '6379'
+          BUCKET_ENDPOINT: 'https://dummy.dummy.dummy'
         run: npm run test:prod
