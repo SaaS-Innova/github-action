@@ -39,7 +39,7 @@ jobs:
         uses: 'SaaS-Innova/github-action@main'
         with:
           repository: ${{ github.repository }}
-          token: ${{ secrets.token }}
+          token: ${{ secrets.TEMPORARY_TOKEN }}
           branches: 'main,development'
 
       - name: Prettify code
