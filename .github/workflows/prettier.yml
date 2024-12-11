@@ -24,22 +24,22 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.head_ref }}
       
-      - name: Set GitHub Token
-        id: set-token
-        run: |
-          if [ -z "${{ secrets.token }}" ]; then
-            echo "Using given token."
-            echo "token=${{ secrets.token }}" >> $GITHUB_ENV
-          else
-            echo "Using repository token."
-            echo "token=${{ secrets.PERSONAL_TOKEN_FOR_WORKFLOW }}" >> $GITHUB_ENV
+      # - name: Set GitHub Token
+      #   id: set-token
+      #   run: |
+      #     if [ -z "${{ secrets.token }}" ]; then
+      #       echo "Using given token."
+      #       echo "token=${{ secrets.token }}" >> $GITHUB_ENV
+      #     else
+      #       echo "Using repository token."
+      #       echo "token=${{ secrets.PERSONAL_TOKEN_FOR_WORKFLOW }}" >> $GITHUB_ENV
 
 
       - name: Check Branch Protection
         uses: 'SaaS-Innova/github-action@main'
         with:
           repository: ${{ github.repository }}
-          token: ${{ secrets.PERSONAL_TOKEN_FOR_WORKFLOW }}
+          token: ${{ secrets.token }}
           branches: 'main,development'
 
       - name: Prettify code
