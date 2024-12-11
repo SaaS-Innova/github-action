@@ -9,10 +9,10 @@ on:
         required: false
         default: '--check **/*.tsx'
         type: string
-    # secrets:
-    #   token:
-    #     description: 'Token to use for GitHub API'
-    #     required: true
+    secrets:
+      token:
+        description: 'Token to use for GitHub API'
+        required: true
 
 jobs:
   prettier:
@@ -29,7 +29,7 @@ jobs:
         with:
           repository: ${{ github.repository }}
           # job_name: 'prettier'
-          token: ${{ github.github_token }}
+          token: ${{ secrets.token }}
           branches: 'main,development'
 
       - name: Prettify code
