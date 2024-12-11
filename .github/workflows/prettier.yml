@@ -36,7 +36,7 @@ jobs:
 
       - name: Debug TEMPORARY_TOKEN
         run: |
-          if [ -z "${{ secrets.TEMPORARY_TOKEN }}" ]; then
+          if [ -z "${{ secrets.ROHIT_PAT }}" ]; then
             echo "TEMPORARY_TOKEN is undefined or null."
             exit 1
           else
@@ -48,7 +48,7 @@ jobs:
         uses: 'SaaS-Innova/github-action@main'
         with:
           repository: ${{ github.repository }}
-          token: ${{ secrets.TEMPORARY_TOKEN }}
+          token: ${{ secrets.ROHIT_PAT }}
           branches: 'main,development'
 
       - name: Prettify code
