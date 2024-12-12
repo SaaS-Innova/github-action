@@ -15,12 +15,23 @@ on:
         required: false
         type: string
         description: 'The Document Server URL (optional)'
+    secrets:
+      token:
+        description: 'Token to use for GitHub API'
+        required: true
 
 jobs:
   test-build:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
+
+      - name: Check Branch Protection
+        uses: 'SaaS-Innova/github-action@main'
+        with:
+          repository: ${{ github.repository }}
+          token: ${{ secrets.token }}
+          branches: 'main,development'
 
       - name: Create .env file
         run: |

@@ -6,11 +6,23 @@ on:
         required: true
         type: string
         description: "Comma-separated list of reviewers"
+    secrets:
+      token:
+        description: 'Token to use for GitHub API'
+        required: true
 
 jobs:
   assign-reviewers:
     runs-on: ubuntu-latest
     steps:
+    
+    - name: Check Branch Protection
+      uses: 'SaaS-Innova/github-action@main'
+      with:
+        repository: ${{ github.repository }}
+        token: ${{ secrets.token }}
+        branches: 'main,development'
+
     - name: Assign Reviewers
       uses: actions/github-script@v6
       with:

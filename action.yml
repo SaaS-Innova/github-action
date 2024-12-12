@@ -73,7 +73,7 @@ runs:
 
         echo "Account Plan: $PLAN"
 
-        if [ "$PLAN" = "free" ]; then
+        if [ "$PLAN" = "free" ] && [ -n "$PLAN" ]; then
           echo "Account is on a Free plan. Skipping branch protection checks."
           exit 0
         else

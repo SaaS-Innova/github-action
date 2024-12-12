@@ -31,6 +31,10 @@ on:
           description: 'Maximum old space size for Node.js'
           required: true
           type: string
+    secrets:
+      token:
+        description: 'Token to use for GitHub API'
+        required: true
 
 jobs:
   test-build:
@@ -63,6 +67,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
+      - name: Check Branch Protection
+        uses: 'SaaS-Innova/github-action@main'
+        with:
+          repository: ${{ github.repository }}
+          token: ${{ secrets.token }}
+          branches: 'main,development'
 
       - name: Setup Node.js
         id: install-node

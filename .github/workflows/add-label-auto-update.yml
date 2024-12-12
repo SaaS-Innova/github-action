@@ -7,11 +7,22 @@ on:
         description: 'Label to add to the pull request'
         required: true
         type: string
+    secrets:
+      token:
+        description: 'Token to use for GitHub API'
+        required: true
 
 jobs:
   add-label-auto-update:
     runs-on: ubuntu-latest
     steps:
+      - name: Check Branch Protection
+        uses: 'SaaS-Innova/github-action@main'
+        with:
+          repository: ${{ github.repository }}
+          token: ${{ secrets.token }}
+          branches: 'main,development'
+          
       - name: Add label to pull request
         uses: actions-ecosystem/action-add-labels@v1
         with:
