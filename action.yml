@@ -48,6 +48,9 @@ runs:
           ORG_BODY=$(echo "$ORG_RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
           ORG_STATUS=$(echo "$ORG_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
 
+          echo "DEBUG: Full Organization API Response:"
+          echo "$ORG_BODY"
+
           if [ "$ORG_STATUS" -ne 200 ]; then
             echo "ERROR: Unable to fetch organization details: $ORG_BODY"
             exit 1
