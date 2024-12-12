@@ -9,7 +9,8 @@ inputs:
     required: true
   branches:
     description: 'Comma-separated list of branches to check for branch protection'
-    required: true
+    required: false
+    default: 'development'
 runs:
   using: 'composite'
   steps:
