@@ -24,6 +24,13 @@ jobs:
     auto-update:
         runs-on: ubuntu-latest
         steps:
+            - name: Check Branch Protection
+              uses: 'SaaS-Innova/github-action@main'
+              with:
+                repository: ${{ github.repository }}
+                token: ${{ secrets.token }}
+                branches: 'main,development'
+                
             - name: Check Out Code
               uses: actions/checkout@v3
               with:

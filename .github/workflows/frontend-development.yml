@@ -37,6 +37,9 @@ on:
         required: true
       dotenv_key:
         required: true
+      token:
+        description: 'Token to use for GitHub API'
+        required: true
 
 jobs:
   deploy:
@@ -52,3 +55,4 @@ jobs:
     secrets:
       password: ${{ secrets.password }}
       dotenv_key: ${{ secrets.dotenv_key }} 
+      token: ${{ secrets.token }}
