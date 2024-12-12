@@ -34,21 +34,21 @@ jobs:
       #       echo "Using repository token."
       #       echo "token=${{ secrets.PERSONAL_TOKEN_FOR_WORKFLOW }}" >> $GITHUB_ENV
 
-      # - name: Debug TEMPORARY_TOKEN
-      #   run: |
-      #     if [ -z "${{ secrets.ROHIT_PAT }}" ]; then
-      #       echo "TEMPORARY_TOKEN is undefined or null."
-      #       exit 1
-      #     else
-      #       echo "TEMPORARY_TOKEN is defined."
-      #       echo "Token starts with: $(echo "${{ secrets.TEMPORARY_TOKEN }}" | head -c 4)****"
-      #     fi
+      - name: Debug TEMPORARY_TOKEN
+        run: |
+          if [ -z "${{ secrets.TEMPORARY_TOKEN }}" ]; then
+            echo "TEMPORARY_TOKEN is undefined or null."
+            exit 1
+          else
+            echo "TEMPORARY_TOKEN is defined."
+            echo "Token starts with: $(echo "${{ secrets.TEMPORARY_TOKEN }}" | head -c 4)****"
+          fi
 
       - name: Check Branch Protection
         uses: 'SaaS-Innova/github-action@main'
         with:
           repository: ${{ github.repository }}
-          token: ${{ secrets.token }}
+          token: ${{ secrets.TEMPORARY_TOKEN }}
           branches: 'main,development'
 
       - name: Prettify code
