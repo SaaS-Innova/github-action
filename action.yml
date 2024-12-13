@@ -95,6 +95,9 @@ runs:
         SETTINGS_BODY=$(echo "$SETTINGS_RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
         SETTINGS_STATUS=$(echo "$SETTINGS_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
 
+        echo "DEBUG: Setting API Response:"
+        echo "$SETTINGS_BODY"
+
         if [ "$SETTINGS_STATUS" -ne 200 ]; then
           echo "ERROR: Failed to fetch repository settings. HTTP Status: $SETTINGS_STATUS"
           echo "Response Body: $SETTINGS_BODY"
@@ -159,9 +162,6 @@ runs:
 
         BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
         STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-
-        echo "DEBUG: Branch Protection API Response:"
-        echo "$BODY"
 
         if [ "$STATUS" -ne 200 ]; then
           echo "ERROR: Failed to fetch branch protection for development branch. HTTP Status: $STATUS"
