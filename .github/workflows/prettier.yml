@@ -18,27 +18,17 @@ jobs:
   prettier:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-          ref: ${{ github.head_ref }}
-
-      # - name: Debug TEMPORARY_TOKEN
-      #   run: |
-      #     if [ -z "${{ secrets.PERSONAL_TOKEN_FOR_WORKFLOW }}" ]; then
-      #       echo "TEMPORARY_TOKEN is undefined or null."
-      #       exit 1
-      #     else
-      #       echo "TEMPORARY_TOKEN is defined."
-      #       echo "Token starts with: $(echo "${{ secrets.PERSONAL_TOKEN_FOR_WORKFLOW }}" | head -c 4)****"
-      #     fi
-
       - name: Check Branch Protection
         uses: 'SaaS-Innova/github-action@main'
         with:
           repository: ${{ github.repository }}
           token: ${{ secrets.token }}
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
 
       - name: Prettify code
         uses: creyD/prettier_action@v4.3

@@ -113,6 +113,46 @@ runs:
 
         echo "SUCCESS: Main branch protection rules are valid."
 
+
+        echo "Checking branch protection for development branch..."
+
+        RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+          --location "https://api.github.com/repos/${{ inputs.repository }}/branches/development/protection" \
+          --header 'Accept: application/vnd.github+json' \
+          --header "Authorization: Bearer ${{ inputs.token }}")
+
+        BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+        STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+
+        if [ "$STATUS" -ne 200 ]; then
+          echo "ERROR: Failed to fetch branch protection for development branch. HTTP Status: $STATUS"
+          echo "Response Body: $BODY"
+          exit 1
+        fi
+
+        # Check required approvals
+        REQUIRED_APPROVALS=$(echo "$BODY" | jq '.required_pull_request_reviews.required_approving_review_count')
+        if [ "$REQUIRED_APPROVALS" -lt 2 ]; then
+          echo "ERROR: Development branch requires at least 2 approvals for merging. Found: $REQUIRED_APPROVALS."
+          exit 1
+        fi
+
+        # Check required status checks
+        REQUIRED_CHECKS=$(echo "$BODY" | jq '.required_status_checks.contexts | length')
+        if [ "$REQUIRED_CHECKS" -lt 3 ]; then
+          echo "ERROR: Development branch requires at least 3 status checks for merging. Found: $REQUIRED_CHECKS."
+          exit 1
+        fi
+
+        # Check "Require conversation resolution before merging"
+        CONVERSATION_RESOLUTION=$(echo "$BODY" | jq '.required_conversation_resolution.enabled')
+        if [ "$CONVERSATION_RESOLUTION" != "true" ]; then
+          echo "ERROR: Development branch must require conversation resolution before merging."
+          exit 1
+        fi
+
+        echo "SUCCESS: Development branch protection rules are valid."
+
         
   # steps:
   #   - name: Parse Branches and Check Protection
