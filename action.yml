@@ -88,14 +88,16 @@ runs:
 
         if [ "$PLAN" = "free" ] && [ -n "$PLAN" ]; then
           echo "Account is on a Free plan. Skipping checks."
+          echo "SKIP_VALIDATION=true" >> $GITHUB_ENV
           exit 0
         else
+          echo "SKIP_VALIDATION=false" >> $GITHUB_ENV
           echo "Account is on a Pro or Enterprise plan. Proceeding with checks."
         fi
         
     # Step 3: Validate Repository Settings
     - name: Validate Repository Settings
-      if: "$PLAN != free"
+      if: env.SKIP_VALIDATION == 'false'
       shell: bash
       run: |
         echo "Checking repository general settings..."
