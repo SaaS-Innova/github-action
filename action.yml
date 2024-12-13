@@ -84,7 +84,7 @@ runs:
         fi
 
         echo "Account Plan: $PLAN"
-        echo "::set-output name=plan::$PLAN"
+        echo "plan=$PLAN" >> $GITHUB_OUTPUT
 
         if [ "$PLAN" = "free" ] && [ -n "$PLAN" ]; then
           echo "Account is on a Free plan. Skipping checks."
