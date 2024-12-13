@@ -45,6 +45,7 @@ runs:
     - name: Check Account Plan
       shell: bash
       run: |
+        # Fetch plan details
         if [ "$OWNER_TYPE" = "Organization" ]; then
           # Fetch organization details
           ORG_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
@@ -83,6 +84,7 @@ runs:
         fi
 
         echo "Account Plan: $PLAN"
+        echo "PLAN=$PLAN" >> $GITHUB_ENV
 
         if [ "$PLAN" = "free" ] && [ -n "$PLAN" ]; then
           echo "Account is on a Free plan. Skipping checks."
@@ -93,6 +95,7 @@ runs:
         
     # Step 3: Validate Repository Settings
     - name: Validate Repository Settings
+      if: $PLAN != 'free'
       shell: bash
       run: |
         echo "Checking repository general settings..."
@@ -138,6 +141,7 @@ runs:
     
     # Step 4: Validate Action Permissions
     - name: Validate Action Permissions
+      if: $PLAN != 'free'
       shell: bash
       run: |
         echo "Checking action permissions..."
@@ -199,6 +203,7 @@ runs:
 
     # Step 5: Validate Branch Protection
     - name: Validate Branch Protection
+      if: $PLAN != 'free'
       shell: bash
       run: |
         echo "Checking branch protection for main branch..."
