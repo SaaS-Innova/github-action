@@ -143,6 +143,7 @@ runs:
     
     # Step 4: Validate Action Permissions
     - name: Validate Action Permissions
+      if: env.SKIP_VALIDATION == 'false'
       shell: bash
       run: |
         echo "Checking action permissions..."
@@ -204,6 +205,7 @@ runs:
 
     # Step 5: Validate Branch Protection
     - name: Validate Branch Protection
+      if: env.SKIP_VALIDATION == 'false'
       shell: bash
       run: |
         echo "Checking branch protection for main branch..."
