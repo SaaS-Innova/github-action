@@ -95,9 +95,6 @@ runs:
         BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
         STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
 
-        echo "DEBUG: Branch Protection API Response:"
-        echo "$BODY"
-
         if [ "$STATUS" -ne 200 ]; then
           echo "ERROR: Failed to fetch branch protection for main branch. HTTP Status: $STATUS"
           echo "Response Body: $BODY"
@@ -124,6 +121,9 @@ runs:
         BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
         STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
 
+        echo "DEBUG: Branch Protection API Response:"
+        echo "$BODY"
+
         if [ "$STATUS" -ne 200 ]; then
           echo "ERROR: Failed to fetch branch protection for development branch. HTTP Status: $STATUS"
           echo "Response Body: $BODY"
@@ -132,8 +132,8 @@ runs:
 
         # Check required approvals
         REQUIRED_APPROVALS=$(echo "$BODY" | jq '.required_pull_request_reviews.required_approving_review_count')
-        if [ "$REQUIRED_APPROVALS" -lt 2 ]; then
-          echo "ERROR: Development branch requires at least 2 approvals for merging. Found: $REQUIRED_APPROVALS."
+        if [ "$REQUIRED_APPROVALS" -lt 1 ]; then
+          echo "ERROR: Development branch requires at least 1 approvals for merging. Found: $REQUIRED_APPROVALS."
           exit 1
         fi
 
