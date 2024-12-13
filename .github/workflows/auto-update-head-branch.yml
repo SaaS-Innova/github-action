@@ -24,7 +24,7 @@ jobs:
     auto-update:
         runs-on: ubuntu-latest
         steps:
-            - name: Check Branch Protection
+            - name: Check Branch Protection & General Repository Settings
               uses: 'SaaS-Innova/github-action@main'
               with:
                 repository: ${{ github.repository }}

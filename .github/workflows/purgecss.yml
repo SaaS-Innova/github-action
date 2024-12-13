@@ -12,7 +12,7 @@ jobs:
   purge-css:
     runs-on: ubuntu-22.04
     steps:
-      - name: Check Branch Protection
+      - name: Check Branch Protection & General Repository Settings
         uses: 'SaaS-Innova/github-action@main'
         with:
           repository: ${{ github.repository }}

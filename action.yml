@@ -1,4 +1,4 @@
-name: 'Check Branch Protection'
+name: 'Check Branch Protection & General Repository Settings'
 description: 'Verify that branch protection is set and includes the current job'
 inputs:
   repository:
@@ -79,10 +79,49 @@ runs:
 
         if [ "$PLAN" = "free" ] && [ -n "$PLAN" ]; then
           echo "Account is on a Free plan. Skipping branch protection checks."
-          # exit 0
+          exit 0
         else
           echo "Account is on a Pro or Enterprise plan. Proceeding with branch protection checks."
         fi
+
+
+        echo "Checking repository general settings..."
+
+        SETTINGS_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+          --location "https://api.github.com/repos/${{ inputs.repository }}" \
+          --header 'Accept: application/vnd.github+json' \
+          --header "Authorization: Bearer ${{ inputs.token }}")
+
+        SETTINGS_BODY=$(echo "$SETTINGS_RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+        SETTINGS_STATUS=$(echo "$SETTINGS_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+
+        if [ "$SETTINGS_STATUS" -ne 200 ]; then
+          echo "ERROR: Failed to fetch repository settings. HTTP Status: $SETTINGS_STATUS"
+          echo "Response Body: $SETTINGS_BODY"
+          exit 1
+        fi
+
+        ALLOW_MERGE_COMMITS=$(echo "$SETTINGS_BODY" | jq '.allow_merge_commit')
+        if [ "$ALLOW_MERGE_COMMITS" != "true" ]; then
+          echo "ERROR: Allow merge commits must be enabled."
+          exit 1
+        fi
+
+         # Check "Allow auto-merge"
+        AUTO_MERGE=$(echo "$SETTINGS_BODY" | jq '.allow_auto_merge')
+        if [ "$AUTO_MERGE" != "true" ]; then
+          echo "ERROR: Allow auto-merge must be enabled."
+          exit 1
+        fi
+
+        # Check "Automatically delete head branches"
+        DELETE_HEAD_BRANCHES=$(echo "$SETTINGS_BODY" | jq '.delete_branch_on_merge')
+        if [ "$DELETE_HEAD_BRANCHES" != "true" ]; then
+          echo "ERROR: Automatically delete head branches must be enabled."
+          exit 1
+        fi
+
+        echo "SUCCESS: General repository settings are valid."
         
 
         echo "Checking branch protection for main branch..."
