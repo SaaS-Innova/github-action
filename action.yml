@@ -14,8 +14,9 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Parse Branches and Check Protection
-      shell: bash    
+    # Step 1: Fetch Repository Details
+    - name: Fetch Repository Details
+      shell: bash
       run: |
         # Fetch repository details
         REPO_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
@@ -38,6 +39,10 @@ runs:
         echo "Repository Owner: $OWNER_LOGIN"
         echo "Owner Type: $OWNER_TYPE"
 
+     # Step 2: Check Account Plan
+    - name: Check Account Plan
+      shell: bash
+      run: |
         if [ "$OWNER_TYPE" = "Organization" ]; then
           # Fetch organization details
           ORG_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
@@ -78,13 +83,16 @@ runs:
         echo "Account Plan: $PLAN"
 
         if [ "$PLAN" = "free" ] && [ -n "$PLAN" ]; then
-          echo "Account is on a Free plan. Skipping branch protection checks."
+          echo "Account is on a Free plan. Skipping checks."
           exit 0
         else
-          echo "Account is on a Pro or Enterprise plan. Proceeding with branch protection checks."
+          echo "Account is on a Pro or Enterprise plan. Proceeding with checks."
         fi
-
-
+        
+    # Step 3: Validate Repository Settings
+    - name: Validate Repository Settings
+      shell: bash
+      run: |
         echo "Checking repository general settings..."
 
         SETTINGS_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
@@ -125,8 +133,72 @@ runs:
         fi
 
         echo "SUCCESS: General repository settings are valid."
-        
+    
+    # Step 4: Validate Action Permissions
+    - name: Validate Action Permissions
+      shell: bash
+      run: |
+        echo "Checking action permissions..."
 
+        # Fetch action permissions
+        PERMISSIONS_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+          --location "https://api.github.com/repos/${{ inputs.repository }}/actions/permissions/workflow" \
+          --header 'Accept: application/vnd.github+json' \
+          --header "Authorization: Bearer ${{ inputs.token }}")
+
+        PERMISSIONS_BODY=$(echo "$PERMISSIONS_RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+        PERMISSIONS_STATUS=$(echo "$PERMISSIONS_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+
+        if [ "$PERMISSIONS_STATUS" -ne 200 ]; then
+          echo "ERROR: Failed to fetch action permissions. HTTP Status: $PERMISSIONS_STATUS"
+          echo "Response Body: $PERMISSIONS_BODY"
+          exit 1
+        fi
+
+        # Validate "Read and write permissions"
+        WORKFLOW_PERMISSION=$(echo "$PERMISSIONS_BODY" | jq -r '.default_workflow_permissions')
+        if [ "$WORKFLOW_PERMISSION" != "write" ]; then
+          echo "ERROR: Workflow permissions must be set to 'Read and write'. Found: $WORKFLOW_PERMISSION."
+          exit 1
+        fi
+
+        # Validate "Allow GitHub Actions to create and approve pull requests"
+        ALLOW_APPROVE_PULLS=$(echo "$PERMISSIONS_BODY" | jq '.can_approve_pull_request_reviews')
+        if [ "$ALLOW_APPROVE_PULLS" != "true" ]; then
+          echo "ERROR: GitHub Actions must be allowed to create and approve pull requests."
+          exit 1
+        fi
+
+        echo "Action permissions are valid. Checking access settings..."
+
+        # Fetch access settings
+        ACCESS_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+          --location "https://api.github.com/repos/${{ inputs.repository }}/actions/permissions/access" \
+          --header 'Accept: application/vnd.github+json' \
+          --header "Authorization: Bearer ${{ inputs.token }}")
+
+        ACCESS_BODY=$(echo "$ACCESS_RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+        ACCESS_STATUS=$(echo "$ACCESS_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+
+        if [ "$ACCESS_STATUS" -ne 200 ]; then
+          echo "ERROR: Failed to fetch action access settings. HTTP Status: $ACCESS_STATUS"
+          echo "Response Body: $ACCESS_BODY"
+          exit 1
+        fi
+
+        # Validate "Not accessible"
+        ACCESS_SETTING=$(echo "$ACCESS_BODY" | jq -r '.access_level')
+        if [ "$ACCESS_SETTING" != "none" ]; then
+          echo "ERROR: Repository access for other workflows must be set to 'Not accessible'. Found: $ACCESS_SETTING."
+          exit 1
+        fi
+
+        echo "SUCCESS: Action permissions and access settings are valid."
+
+    # Step 5: Validate Branch Protection
+    - name: Validate Branch Protection
+      shell: bash
+      run: |
         echo "Checking branch protection for main branch..."
 
         RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
@@ -191,6 +263,242 @@ runs:
         fi
 
         echo "SUCCESS: Development branch protection rules are valid."
+  # steps:
+  #   - name: Parse Branches and Check Protection
+  #     shell: bash    
+  #     run: |
+  #       # Fetch repository details
+  #       REPO_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+  #         --location "https://api.github.com/repos/${{ inputs.repository }}" \
+  #         --header 'Accept: application/vnd.github+json' \
+  #         --header "Authorization: Bearer ${{ inputs.token }}")
+
+  #       REPO_BODY=$(echo "$REPO_RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+  #       REPO_STATUS=$(echo "$REPO_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+
+  #       if [ "$REPO_STATUS" -ne 200 ]; then
+  #         echo "ERROR: Unable to fetch repository details: $REPO_BODY"
+  #         exit 1
+  #       fi
+
+  #       # Extract owner type and plan
+  #       OWNER_TYPE=$(echo "$REPO_BODY" | jq -r '.owner.type')
+  #       OWNER_LOGIN=$(echo "$REPO_BODY" | jq -r '.owner.login')
+
+  #       echo "Repository Owner: $OWNER_LOGIN"
+  #       echo "Owner Type: $OWNER_TYPE"
+
+  #       if [ "$OWNER_TYPE" = "Organization" ]; then
+  #         # Fetch organization details
+  #         ORG_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+  #           --location "https://api.github.com/orgs/$OWNER_LOGIN" \
+  #           --header 'Accept: application/vnd.github+json' \
+  #           --header "Authorization: Bearer ${{ inputs.token }}")
+
+  #         ORG_BODY=$(echo "$ORG_RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+  #         ORG_STATUS=$(echo "$ORG_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+
+  #         echo "DEBUG: Full Organization API Response:"
+  #         echo "$ORG_BODY"
+
+  #         if [ "$ORG_STATUS" -ne 200 ]; then
+  #           echo "ERROR: Unable to fetch organization details: $ORG_BODY"
+  #           exit 1
+  #         fi
+
+  #         PLAN=$(echo "$ORG_BODY" | jq -r '.plan.name')
+  #       else
+  #         # Fetch user details
+  #         USER_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+  #           --location "https://api.github.com/users/$OWNER_LOGIN" \
+  #           --header 'Accept: application/vnd.github+json' \
+  #           --header "Authorization: Bearer ${{ inputs.token }}")
+
+  #         USER_BODY=$(echo "$USER_RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+  #         USER_STATUS=$(echo "$USER_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+
+  #         if [ "$USER_STATUS" -ne 200 ]; then
+  #           echo "ERROR: Unable to fetch user details: $USER_BODY"
+  #           exit 1
+  #         fi
+
+  #         PLAN=$(echo "$USER_BODY" | jq -r '.plan.name')
+  #       fi
+
+  #       echo "Account Plan: $PLAN"
+
+  #       if [ "$PLAN" = "free" ] && [ -n "$PLAN" ]; then
+  #         echo "Account is on a Free plan. Skipping branch protection checks."
+  #         exit 0
+  #       else
+  #         echo "Account is on a Pro or Enterprise plan. Proceeding with branch protection checks."
+  #       fi
+
+
+  #       echo "Checking repository general settings..."
+
+  #       SETTINGS_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+  #         --location "https://api.github.com/repos/${{ inputs.repository }}" \
+  #         --header 'Accept: application/vnd.github+json' \
+  #         --header "Authorization: Bearer ${{ inputs.token }}")
+
+  #       SETTINGS_BODY=$(echo "$SETTINGS_RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+  #       SETTINGS_STATUS=$(echo "$SETTINGS_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+
+  #       echo "DEBUG: Setting API Response:"
+  #       echo "$SETTINGS_BODY"
+
+  #       if [ "$SETTINGS_STATUS" -ne 200 ]; then
+  #         echo "ERROR: Failed to fetch repository settings. HTTP Status: $SETTINGS_STATUS"
+  #         echo "Response Body: $SETTINGS_BODY"
+  #         exit 1
+  #       fi
+
+  #       ALLOW_MERGE_COMMITS=$(echo "$SETTINGS_BODY" | jq '.allow_merge_commit')
+  #       if [ "$ALLOW_MERGE_COMMITS" != "true" ]; then
+  #         echo "ERROR: Allow merge commits must be enabled."
+  #         exit 1
+  #       fi
+
+  #        # Check "Allow auto-merge"
+  #       AUTO_MERGE=$(echo "$SETTINGS_BODY" | jq '.allow_auto_merge')
+  #       if [ "$AUTO_MERGE" != "true" ]; then
+  #         echo "ERROR: Allow auto-merge must be enabled."
+  #         exit 1
+  #       fi
+
+  #       # Check "Automatically delete head branches"
+  #       DELETE_HEAD_BRANCHES=$(echo "$SETTINGS_BODY" | jq '.delete_branch_on_merge')
+  #       if [ "$DELETE_HEAD_BRANCHES" != "true" ]; then
+  #         echo "ERROR: Automatically delete head branches must be enabled."
+  #         exit 1
+  #       fi
+
+  #       echo "SUCCESS: General repository settings are valid."
+
+
+  #       echo "Checking action permissions..."
+
+  #       # Fetch action permissions
+  #       PERMISSIONS_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+  #         --location "https://api.github.com/repos/${{ inputs.repository }}/actions/permissions/workflow" \
+  #         --header 'Accept: application/vnd.github+json' \
+  #         --header "Authorization: Bearer ${{ inputs.token }}")
+
+  #       PERMISSIONS_BODY=$(echo "$PERMISSIONS_RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+  #       PERMISSIONS_STATUS=$(echo "$PERMISSIONS_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+
+  #       if [ "$PERMISSIONS_STATUS" -ne 200 ]; then
+  #         echo "ERROR: Failed to fetch action permissions. HTTP Status: $PERMISSIONS_STATUS"
+  #         echo "Response Body: $PERMISSIONS_BODY"
+  #         exit 1
+  #       fi
+
+  #       # Validate "Read and write permissions"
+  #       WORKFLOW_PERMISSION=$(echo "$PERMISSIONS_BODY" | jq -r '.default_workflow_permissions')
+  #       if [ "$WORKFLOW_PERMISSION" != "write" ]; then
+  #         echo "ERROR: Workflow permissions must be set to 'Read and write'. Found: $WORKFLOW_PERMISSION."
+  #         exit 1
+  #       fi
+
+  #       # Validate "Allow GitHub Actions to create and approve pull requests"
+  #       ALLOW_APPROVE_PULLS=$(echo "$PERMISSIONS_BODY" | jq '.can_approve_pull_request_reviews')
+  #       if [ "$ALLOW_APPROVE_PULLS" != "true" ]; then
+  #         echo "ERROR: GitHub Actions must be allowed to create and approve pull requests."
+  #         exit 1
+  #       fi
+
+  #       echo "Action permissions are valid. Checking access settings..."
+
+  #       # Fetch access settings
+  #       ACCESS_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+  #         --location "https://api.github.com/repos/${{ inputs.repository }}/actions/permissions/access" \
+  #         --header 'Accept: application/vnd.github+json' \
+  #         --header "Authorization: Bearer ${{ inputs.token }}")
+
+  #       ACCESS_BODY=$(echo "$ACCESS_RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+  #       ACCESS_STATUS=$(echo "$ACCESS_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+
+  #       if [ "$ACCESS_STATUS" -ne 200 ]; then
+  #         echo "ERROR: Failed to fetch action access settings. HTTP Status: $ACCESS_STATUS"
+  #         echo "Response Body: $ACCESS_BODY"
+  #         exit 1
+  #       fi
+
+  #       # Validate "Not accessible"
+  #       ACCESS_SETTING=$(echo "$ACCESS_BODY" | jq -r '.access_level')
+  #       if [ "$ACCESS_SETTING" != "none" ]; then
+  #         echo "ERROR: Repository access for other workflows must be set to 'Not accessible'. Found: $ACCESS_SETTING."
+  #         exit 1
+  #       fi
+
+  #       echo "SUCCESS: Action permissions and access settings are valid."
+        
+
+  #       echo "Checking branch protection for main branch..."
+
+  #       RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+  #         --location "https://api.github.com/repos/${{ inputs.repository }}/branches/main/protection" \
+  #         --header 'Accept: application/vnd.github+json' \
+  #         --header "Authorization: Bearer ${{ inputs.token }}")
+
+  #       BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+  #       STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+
+  #       if [ "$STATUS" -ne 200 ]; then
+  #         echo "ERROR: Failed to fetch branch protection for main branch. HTTP Status: $STATUS"
+  #         echo "Response Body: $BODY"
+  #         exit 1
+  #       fi
+
+  #       # Check required approvals
+  #       REQUIRED_APPROVALS=$(echo "$BODY" | jq '.required_pull_request_reviews.required_approving_review_count')
+  #       if [ "$REQUIRED_APPROVALS" -lt 1 ]; then
+  #         echo "ERROR: Main branch requires at least 1 approval for merging. Found: $REQUIRED_APPROVALS."
+  #         exit 1
+  #       fi
+
+  #       echo "SUCCESS: Main branch protection rules are valid."
+
+
+  #       echo "Checking branch protection for development branch..."
+
+  #       RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+  #         --location "https://api.github.com/repos/${{ inputs.repository }}/branches/development/protection" \
+  #         --header 'Accept: application/vnd.github+json' \
+  #         --header "Authorization: Bearer ${{ inputs.token }}")
+
+  #       BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+  #       STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+
+  #       if [ "$STATUS" -ne 200 ]; then
+  #         echo "ERROR: Failed to fetch branch protection for development branch. HTTP Status: $STATUS"
+  #         echo "Response Body: $BODY"
+  #         exit 1
+  #       fi
+
+  #       # Check required approvals
+  #       REQUIRED_APPROVALS=$(echo "$BODY" | jq '.required_pull_request_reviews.required_approving_review_count')
+  #       if [ "$REQUIRED_APPROVALS" -lt 1 ]; then
+  #         echo "ERROR: Development branch requires at least 1 approvals for merging. Found: $REQUIRED_APPROVALS."
+  #         exit 1
+  #       fi
+
+  #       # Check required status checks
+  #       REQUIRED_CHECKS=$(echo "$BODY" | jq '.required_status_checks.contexts | length')
+  #       if [ "$REQUIRED_CHECKS" -lt 3 ]; then
+  #         echo "ERROR: Development branch requires at least 3 status checks for merging. Found: $REQUIRED_CHECKS."
+  #         exit 1
+  #       fi
+
+  #       # Check "Require conversation resolution before merging"
+  #       CONVERSATION_RESOLUTION=$(echo "$BODY" | jq '.required_conversation_resolution.enabled')
+  #       if [ "$CONVERSATION_RESOLUTION" != "true" ]; then
+  #         echo "ERROR: Development branch must require conversation resolution before merging."
+  #         exit 1
+  #       fi
+
+  #       echo "SUCCESS: Development branch protection rules are valid."
 
         
   # steps:
