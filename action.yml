@@ -84,7 +84,7 @@ runs:
         fi
 
         echo "Account Plan: $PLAN"
-        echo "plan=$PLAN" >> $GITHUB_OUTPUT
+        echo "PLAN=$PLAN" >> $GITHUB_ENV
 
         if [ "$PLAN" = "free" ] && [ -n "$PLAN" ]; then
           echo "Account is on a Free plan. Skipping checks."
@@ -95,7 +95,7 @@ runs:
         
     # Step 3: Validate Repository Settings
     - name: Validate Repository Settings
-      if: steps.check_plan.outputs.plan != 'free'
+      if: "$PLAN != free"
       shell: bash
       run: |
         echo "Checking repository general settings..."
