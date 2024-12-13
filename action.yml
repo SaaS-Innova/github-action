@@ -36,13 +36,16 @@ runs:
         OWNER_TYPE=$(echo "$REPO_BODY" | jq -r '.owner.type')
         OWNER_LOGIN=$(echo "$REPO_BODY" | jq -r '.owner.login')
 
-        echo "Repository Owner: $OWNER_LOGIN"
-        echo "Owner Type: $OWNER_TYPE"
+        echo "::set-output name=owner_type::$OWNER_TYPE"
+        echo "::set-output name=owner_login::$OWNER_LOGIN"
 
      # Step 2: Check Account Plan
     - name: Check Account Plan
       shell: bash
       run: |
+        OWNER_TYPE="${{ steps.Fetch Repository Details.outputs.owner_type }}"
+        OWNER_LOGIN="${{ steps.Fetch Repository Details.outputs.owner_login }}"
+
         if [ "$OWNER_TYPE" = "Organization" ]; then
           # Fetch organization details
           ORG_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
