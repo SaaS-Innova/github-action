@@ -36,6 +36,8 @@ runs:
         OWNER_TYPE=$(echo "$REPO_BODY" | jq -r '.owner.type')
         OWNER_LOGIN=$(echo "$REPO_BODY" | jq -r '.owner.login')
 
+        echo "OWNER_TYPE: $OWNER_TYPE"
+        echo "OWNER_LOGIN: $OWNER_LOGIN"
         echo "OWNER_TYPE=$OWNER_TYPE" >> $GITHUB_ENV
         echo "OWNER_LOGIN=$OWNER_LOGIN" >> $GITHUB_ENV
 
