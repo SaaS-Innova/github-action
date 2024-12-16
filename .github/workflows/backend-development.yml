@@ -34,11 +34,14 @@ on:
     secrets:
       password:
         required: true
+        description: "The password for the server"
       dotenv_key:
         required: true
+        description: "The key for the dotenv file"
       dotenv_me:
           required: true
-      token:
+          description: "The dotenv me key for the dotenv file"
+      token_for_github_api:
         description: 'Token to use for GitHub API'
         required: true
 
@@ -57,4 +60,4 @@ jobs:
       password: ${{ secrets.password }}
       dotenv_key: ${{ secrets.dotenv_key }} 
       dotenv_me: ${{ secrets.dotenv_me }}
-      token: ${{ secrets.token }}
+      token_for_github_api: ${{ secrets.token_for_github_api }}

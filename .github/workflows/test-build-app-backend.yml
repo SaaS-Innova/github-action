@@ -2,7 +2,7 @@ name: 'Test build app'
 
 on:
   workflow_call: # Allows this workflow to be called from other repositories
-    inputs: # Define dynamic variables to accept from caller
+    inputs:
       node_version:
         description: 'Node.js version'
         required: true
@@ -32,7 +32,7 @@ on:
           required: true
           type: string
     secrets:
-      token:
+      token_for_github_api:
         description: 'Token to use for GitHub API'
         required: true
 
@@ -70,7 +70,7 @@ jobs:
         uses: 'SaaS-Innova/github-action@main'
         with:
           repository: ${{ github.repository }}
-          token: ${{ secrets.token }}
+          token_for_github_api: ${{ secrets.token_for_github_api }}
           
       - uses: actions/checkout@v3
 

@@ -2,9 +2,9 @@ name: 'PurgeCSS Action'
 
 # This makes the workflow reusable
 on:
-  workflow_call:  # Add this line
+  workflow_call: 
     secrets:
-      token:
+      token_for_github_api:
         description: 'Token to use for GitHub API'
         required: true
 
@@ -16,7 +16,7 @@ jobs:
         uses: 'SaaS-Innova/github-action@main'
         with:
           repository: ${{ github.repository }}
-          token: ${{ secrets.token }}
+          token_for_github_api: ${{ secrets.token_for_github_api }}
 
       - name: Checkout
         uses: actions/checkout@v2

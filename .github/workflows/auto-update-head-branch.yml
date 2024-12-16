@@ -17,7 +17,8 @@ on:
         required: true
         type: string
     secrets:
-      token:
+      token_for_github_api:
+          description: 'Token to use for GitHub API'
           required: true
 
 jobs:
@@ -28,19 +29,19 @@ jobs:
               uses: 'SaaS-Innova/github-action@main'
               with:
                 repository: ${{ github.repository }}
-                token: ${{ secrets.token }}
+                token_for_github_api: ${{ secrets.token_for_github_api }}
                 
             - name: Check Out Code
               uses: actions/checkout@v3
               with:
-                  token: ${{ secrets.token }}
+                  token: ${{ secrets.token_for_github_api }}
               env:
-                  PAT: ${{ secrets.token }}
+                  PAT: ${{ secrets.token_for_github_api }}
 
             - name: Get Oldest Pull Request
               id: get-oldest-pr
               run: |
-                  GITHUB_TOKEN=${{ secrets.token }}
+                  GITHUB_TOKEN=${{ secrets.token_for_github_api }}
                   GITHUB_REPOSITORY=${{ inputs.repository }}
 
                   echo "Use the GitHub API to fetch the oldest open pull request targeting ${{ inputs.base_branch }} branch"
