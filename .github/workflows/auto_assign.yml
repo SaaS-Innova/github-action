@@ -28,11 +28,19 @@ jobs:
         script: |
           const reviewers = "${{ inputs.reviewers }}".split(',').map(r => r.trim()); // Parse input
           console.log("Reviewers to assign:", reviewers);
+          const prAuthor = context.payload.pull_request.user.login; // Get PR author
+          console.log("PR Author:", prAuthor);
+          const filteredReviewers = reviewers.filter(r => r !== prAuthor); // Exclude PR author
+          console.log("Filtered Reviewers:", filteredReviewers);
+          if (filteredReviewers.length === 0) {
+            console.log("No valid reviewers to assign.");
+            return; // Exit if no valid reviewers
+          }
           await github.rest.pulls.requestReviewers({
             owner: context.repo.owner,
             repo: context.repo.repo,
             pull_number: context.payload.pull_request.number,
-            reviewers: reviewers,
+            reviewers: filteredReviewers,
           });
   
 
