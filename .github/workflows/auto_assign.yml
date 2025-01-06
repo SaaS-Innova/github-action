@@ -21,6 +21,19 @@ jobs:
       with:
         repository: ${{ github.repository }}
         token_for_github_api: ${{ secrets.token_for_github_api }}
+    
+    - name: Assign PR Creator as Assignee
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const prAuthor = context.payload.pull_request.user.login;
+          console.log(`Assigning ${prAuthor} as the PR assignee.`);
+          await github.rest.issues.addAssignees({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.payload.pull_request.number,
+            assignees: [prAuthor],
+          });
 
     - name: Assign Reviewers
       uses: actions/github-script@v6
