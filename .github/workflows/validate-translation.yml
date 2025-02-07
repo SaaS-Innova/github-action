@@ -28,5 +28,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run translation validation script
-        run: node SaaS-Innova/github-action/.github/scripts/validate-translations.js@main
+      - name: List i18n directory contents
+        run: ls -R src/i18n
+
+      - name: Validate translation files
+        run: npm run checkTranslationFile
