@@ -17,19 +17,18 @@ jobs:
           repository: ${{ github.repository }}
           token_for_github_api: ${{ secrets.token_for_github_api }}
 
-      - name: Checkout repository
+      - name: Checkout calling repository (Caller Repo)
         uses: actions/checkout@v3
-      
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
         with:
-          node-version: '18'
-      
-      - name: Install dependencies
-        run: npm install
+          path: ${{ github.workspace }}
 
-      - name: List i18n directory contents
-        run: ls -R src/i18n
-
+      - name: Checkout reusable workflow repository
+        uses: actions/checkout@v3
+        with:
+          repository: 'SaaS-Innova/github-action'
+          path: 'SaaS-Innova/github-action'
+          
       - name: Validate translation files
-        run: npm run checkTranslationFile
+        run: node SaaS-Innova/github-action/.github/scripts/validate-translations.js
+        env:
+          I18N_PATH: ${{ github.workspace }}/src/i18n
