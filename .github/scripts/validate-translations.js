@@ -93,7 +93,8 @@ function isCamelCase(str) {
 function validateKeysAndValues(jsonObj) {
   const seenKeys = new Set();
   let isValid = true;
-
+  const capitalizedAllowedPrefixes = ["components.", "auth."];
+  const capitalizedAllowedIncludes = [".messages."];
   function traverse(obj, prefix = "") {
     Object.entries(obj).forEach(([key, value]) => {
       const fullKey = `${prefix}${key}`;
@@ -117,7 +118,12 @@ function validateKeysAndValues(jsonObj) {
       if (typeof value === "string") {
         // Allow capital letters in 'components' and 'messages' keys
         const allowCapitalization =
-          fullKey.startsWith("components.") || fullKey.includes(".messages.");
+          capitalizedAllowedPrefixes.some((prefix) =>
+            fullKey.startsWith(prefix)
+          ) ||
+          capitalizedAllowedIncludes.some((include) =>
+            fullKey.includes(include)
+          );
 
         // Validate that values are entirely lowercase
         value = value.replace(/\{\{[^}]+\}\}/g, ""); // Remove variables
