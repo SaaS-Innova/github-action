@@ -52,6 +52,9 @@ jobs:
 
       - name: Checkout Repository
         uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.token_for_github_api }}
+          submodules: true
 
       - name: Setup Node.js 20
         id: install-node

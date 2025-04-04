@@ -83,6 +83,9 @@ jobs:
           token_for_github_api: ${{ secrets.token_for_github_api }}
           
       - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.token_for_github_api }}
+          submodules: true
 
       - name: Setup Node.js
         id: install-node
