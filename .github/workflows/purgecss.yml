@@ -11,6 +11,7 @@ on:
 jobs:
   purge-css:
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
       - name: Check Branch Protection & General Repository Settings
         uses: 'SaaS-Innova/github-action@main'
