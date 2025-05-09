@@ -75,7 +75,7 @@ jobs:
               run: |
                   eval "$( ssh-agent )"
                   printenv|egrep -e SSH_AUTH_SOCK -e SSH_AGENT_PID >> $GITHUB_ENV
-                  mkdir ~/.ssh
+                  mkdir -p ~/.ssh
                   echo "${{ inputs.FINGERPRINT }}" >> ~/.ssh/known_hosts
 
             - name: Prepare target for deploy
