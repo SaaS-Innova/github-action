@@ -44,11 +44,10 @@ jobs:
             echo "REACT_APP_DOCUMENT_SERVER_URL=${{ inputs.document_server_url }}" >> .env
           fi
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 22
         id: install-node
         uses: actions/setup-node@v3
         with:
-          # node-version: 20.6.1
           node-version: 22.14.0
           cache: 'npm'
 
