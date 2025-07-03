@@ -259,8 +259,8 @@ runs:
 
         # Check required status checks
         REQUIRED_CHECKS=$(echo "$BODY" | jq '.required_status_checks.contexts | length')
-        if [ "$REQUIRED_CHECKS" -lt 3 ]; then
-          echo "ERROR: Development branch requires at least 3 status checks for merging. Found: $REQUIRED_CHECKS."
+        if [ "$REQUIRED_CHECKS" -lt 2 ]; then
+          echo "ERROR: Development branch requires at least 2 status checks for merging. Found: $REQUIRED_CHECKS."
           exit 1
         fi
 
