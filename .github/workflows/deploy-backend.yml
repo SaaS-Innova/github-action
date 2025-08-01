@@ -25,6 +25,12 @@ on:
       pm2_name:
         type: string
         required: true
+      node_path:
+        type: string
+        description: "Path to the Node.js installation"
+        required: false
+        default: "/usr/bin/"
+
     secrets:
       password:
         required: true
@@ -93,13 +99,13 @@ jobs:
         run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && unzip -o repo.zip && rm repo.zip"
 
       - name: Glesys server, install dependencies
-        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && source ~/.bashrc && /usr/bin/npm install"
+        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && source ~/.bashrc && {{ inputs.NODE_PATH }}npm install"
 
       - name: Glesys server, fetch env
-        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && source ~/.bashrc && /usr/bin/npx dotenv-vault@latest pull ${{ inputs.MODE }} .env --dotenvMe=${{ secrets.DOTENV_ME }}"
+        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && source ~/.bashrc && {{ inputs.NODE_PATH }}npx dotenv-vault@latest pull ${{ inputs.MODE }} .env --dotenvMe=${{ secrets.DOTENV_ME }}"
 
       - name: Glesys server, run migrations
-        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} &&  source ~/.bashrc && /usr/bin/npm run migration:run"
+        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} &&  source ~/.bashrc && {{ inputs.NODE_PATH }}npm run migration:run"
 
       - name: Glesys server, restart PM2
-        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && cp .env dist/.env && /usr/bin/pm2 restart ${{ inputs.PM2_NAME }}"
+        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && cp .env dist/.env && {{ inputs.NODE_PATH }}pm2 restart ${{ inputs.PM2_NAME }}"
