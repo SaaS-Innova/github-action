@@ -31,6 +31,11 @@ on:
         required: true
         type: string
         description: "The mode for the deployment"
+      node_path:
+        type: string
+        required: false
+        description: "Path to the Node.js installation"
+        default: "/usr/bin/"
     secrets:
       password:
         required: true
@@ -56,6 +61,7 @@ jobs:
       fingerprint: ${{ inputs.fingerprint }}
       pm2_name: ${{ inputs.pm2_name }}
       mode: ${{ inputs.mode }}
+      node_path: ${{ inputs.node_path }}
     secrets:
       password: ${{ secrets.password }}
       dotenv_key: ${{ secrets.dotenv_key }} 
