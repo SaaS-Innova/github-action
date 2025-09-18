@@ -102,7 +102,7 @@ jobs:
         run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && source ~/.bashrc && ${{ inputs.NODE_PATH }}npm install"
 
       - name: Glesys server, run migrations
-        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} &&  source ~/.bashrc && DOTENV_KEY=${{ secrets.DOTENV_KEY }} ${{ inputs.NODE_PATH }}npm run migration:run"
+        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} &&  source ~/.bashrc && DOTENV_KEY=${{ secrets.DOTENV_KEY }} NODE_OPTIONS='-r dotenv/config' ${{ inputs.NODE_PATH }}npm run migration:run"
 
       - name: Glesys server, restart PM2
-        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && DOTENV_KEY=${{ secrets.DOTENV_KEY }} ${{ inputs.NODE_PATH }}pm2 restart ${{ inputs.PM2_NAME }}"
+        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && DOTENV_KEY=${{ secrets.DOTENV_KEY }} NODE_OPTIONS='-r dotenv/config' ${{ inputs.NODE_PATH }}pm2 restart ${{ inputs.PM2_NAME }}"
