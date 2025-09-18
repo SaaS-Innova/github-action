@@ -31,7 +31,7 @@ on:
         required: false
         default: "/usr/bin/"
 
-    secrets:
+  secrets:
       password:
         required: true
         description: "The password for the server"
@@ -76,7 +76,7 @@ jobs:
       - name: Make a build
         run: npm run build
         env:
-          DOTENV_KEY: ${{ secrets.DOTENV_KEY }}
+          DOTENV_KEY: ${{ secrets.DOTENV_KEY }}   # decrypt vault at build if needed
 
       - name: Activate ssh-agent
         run: |
@@ -101,11 +101,24 @@ jobs:
       - name: Glesys server, install dependencies
         run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && source ~/.bashrc && ${{ inputs.NODE_PATH }}npm install"
 
-      - name: Glesys server, fetch env
-        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && source ~/.bashrc && ${{ inputs.NODE_PATH }}npx dotenv-vault@latest pull ${{ inputs.MODE }} .env --dotenvMe=${{ secrets.DOTENV_ME }}"
+      # REMOVED: fetch env with dotenv-vault pull
+      # - name: Glesys server, fetch env
+      #  run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && source ~/.bashrc && ${{ inputs.NODE_PATH }}npx dotenv-vault@latest pull ${{ inputs.MODE }} .env --dotenvMe=${{ secrets.DOTENV_ME }}"
+
 
       - name: Glesys server, run migrations
-        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} &&  source ~/.bashrc && ${{ inputs.NODE_PATH }}npm run migration:run"
+        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "
+          cd ${{ inputs.DESTINATION }} && \
+          source ~/.bashrc && \
+          export DOTENV_KEY='${{ secrets.DOTENV_KEY }}' && \
+          ${{ inputs.NODE_PATH }}npm run migration:run
+        "
 
       - name: Glesys server, restart PM2
-        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && cp .env dist/.env && ${{ inputs.NODE_PATH }}pm2 restart ${{ inputs.PM2_NAME }}"
+        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "
+          cd ${{ inputs.DESTINATION }} && \
+          source ~/.bashrc && \
+          export DOTENV_KEY='${{ secrets.DOTENV_KEY }}' && \
+          ${{ inputs.NODE_PATH }}pm2 restart ${{ inputs.PM2_NAME }} || \
+          ${{ inputs.NODE_PATH }}pm2 start ecosystem.config.js --name ${{ inputs.PM2_NAME }}
+        "
