@@ -12,7 +12,7 @@ on:
       user:
         type: string
         required: false
-        default: "deploy"
+        default: 'deploy'
       fingerprint:
         type: string
         required: true
@@ -39,10 +39,10 @@ on:
         required: true
         description: "The key for the dotenv file"
       dotenv_me:
-        required: true
-        description: "The dotenv me key for the dotenv file"
+          required: true
+          description: "The dotenv me key for the dotenv file"
       token_for_github_api:
-        description: "Token to use for GitHub API"
+        description: 'Token to use for GitHub API'
         required: true
 
 jobs:
@@ -52,7 +52,7 @@ jobs:
 
     steps:
       - name: Check Branch Protection & General Repository Settings
-        uses: "SaaS-Innova/github-action@main"
+        uses: 'SaaS-Innova/github-action@main'
         with:
           repository: ${{ github.repository }}
           token_for_github_api: ${{ secrets.token_for_github_api }}
@@ -68,7 +68,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 22.14.0
-          cache: "npm"
+          cache: 'npm'
 
       - name: Install Dependencies
         run: npm install
@@ -87,7 +87,7 @@ jobs:
 
       - name: Compress Repository
         run: |
-          find . -type f \( -not -path './node_modules/*' -a -not -path './.git*' \) -exec zip repo.zip {} +
+          find . -type f \( -not -path './node_modules/*' -a -not -path './.git*' \) -exec zip repo.zip {} + 
 
       - name: Cleanup/delete old files and create empty one instead
         run: sshpass -p ${{ secrets.PASSWORD }} ssh -v -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "rm -rf ${{ inputs.DESTINATION }} && mkdir ${{ inputs.DESTINATION }}"
@@ -101,20 +101,11 @@ jobs:
       - name: Glesys server, install dependencies
         run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && source ~/.bashrc && ${{ inputs.NODE_PATH }}npm install"
 
-      # - name: Glesys server, fetch env
-      #   run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && source ~/.bashrc && ${{ inputs.NODE_PATH }}npx dotenv-vault@latest pull ${{ inputs.MODE }} .env --dotenvMe=${{ secrets.DOTENV_ME }}"
+      - name: Glesys server, fetch env
+        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && source ~/.bashrc && ${{ inputs.NODE_PATH }}npx dotenv-vault@latest pull ${{ inputs.MODE }} .env --dotenvMe=${{ secrets.DOTENV_ME }}"
 
       - name: Glesys server, run migrations
-        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "
-          cd ${{ inputs.DESTINATION }} && \
-          source ~/.bashrc && \
-          export DOTENV_KEY='${{ secrets.DOTENV_KEY }}' && \
-          ${{ inputs.NODE_PATH }}npm run migration:run"
+        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} &&  source ~/.bashrc && ${{ inputs.NODE_PATH }}npm run migration:run"
 
       - name: Glesys server, restart PM2
-        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "
-          cd ${{ inputs.DESTINATION }} && \
-          source ~/.bashrc && \
-          export DOTENV_KEY='${{ secrets.DOTENV_KEY }}' && \
-          ${{ inputs.NODE_PATH }}pm2 restart ${{ inputs.PM2_NAME }} || \
-          ${{ inputs.NODE_PATH }}pm2 start ecosystem.config.js --name ${{ inputs.PM2_NAME }} "
+        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && cp .env dist/.env && ${{ inputs.NODE_PATH }}pm2 restart ${{ inputs.PM2_NAME }}"
