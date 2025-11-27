@@ -127,6 +127,7 @@ jobs:
           push_or_update REACT_APP_GRAPHQL_URL sensitive
           push_or_update SENTRY_DSN            sensitive
           push_or_update SENTRY_AUTH_TOKEN     sensitive
+          push_or_update EXPO_PROJECT_ID     sensitive
 
       - name: Build on EAS
         run: |
