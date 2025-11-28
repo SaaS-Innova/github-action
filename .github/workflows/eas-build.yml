@@ -19,8 +19,6 @@ on:
     secrets:
       EXPO_TOKEN:
         required: true
-      DOTENV_KEY_STAGING:
-        required: false
       DOTENV_ME:
         required: false
 
