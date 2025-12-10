@@ -24,6 +24,8 @@ jobs:
   test-build:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
+    env:
+      NODE_OPTIONS: --max_old_space_size=4096
     steps:
       - name: Check Branch Protection & General Repository Settings
         uses: 'SaaS-Innova/github-action@main'
@@ -55,8 +57,6 @@ jobs:
         run: npm install
 
       - name: Build Application
-        env:
-          NODE_OPTIONS: --max_old_space_size=4096
         run: npm run build
 
       - name: Run Tests
