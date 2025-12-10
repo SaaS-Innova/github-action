@@ -56,7 +56,7 @@ jobs:
 
       - name: Build Application
         env:
-          NODE_OPTIONS: '--max_old_space_size=4096'
+          NODE_OPTIONS: --max_old_space_size=4096
         run: npm run build
 
       - name: Run Tests
