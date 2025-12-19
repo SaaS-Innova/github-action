@@ -47,38 +47,46 @@ jobs:
       - name: Pull app env from Env Vault (no browser) + persist
         shell: bash
         run: |
+          # Pull environment variables from the vault into the .env file
           npx dotenv-vault@latest pull "${{ inputs.environment }}" .env --yes --dotenvMe="${{ secrets.DOTENV_ME }}"
 
+          # List all the environment keys pulled from the .env file
           echo "Loaded env keys:"
           cut -d= -f1 .env | sed 's/^/- /'
 
-          # Load into this step
+          # Load the environment variables into the shell for later use
           set -a
           source .env
           set +a
 
-          # ---- Persist to later steps via $GITHUB_ENV ----
+          # Dynamically persist all environment variables into $GITHUB_ENV
           persist () {
             name="$1"; val="${!1:-}"
             if [ -n "$val" ]; then
+              # Persist each variable dynamically into $GITHUB_ENV for later steps
               printf '%s=%s\n' "$name" "$val" >> "$GITHUB_ENV"
             else
               echo "::warning::$name not set; will be missing in later steps"
             fi
           }
 
-          # Persist the exact names your push step expects
-          persist REACT_APP_PUBLIC_URL
-          persist REACT_APP_GRAPHQL_URL
-          persist SENTRY_DSN
-          persist SENTRY_AUTH_TOKEN
-          persist EXPO_PROJECT_ID
+          # Loop through all key-value pairs in the .env file and dynamically persist them
+          while IFS='=' read -r name value; do
+            # Skip empty lines or comments
+            if [[ -z "$name" || "$name" == \#* ]]; then
+              continue
+            fi
+
+            # Persist each environment variable dynamically
+            persist "$name"
+          done < .env
 
       - name: Push env to EAS (create or overwrite)
         shell: bash
         run: |
           set -e
 
+          # Define the function for pushing or updating the environment variables in EAS
           push_or_update () {
             local name="$1"; local visibility="$2"; local val="${!1:-}"
 
@@ -121,11 +129,15 @@ jobs:
             return $rc
           }
 
-          push_or_update REACT_APP_PUBLIC_URL  sensitive
-          push_or_update REACT_APP_GRAPHQL_URL sensitive
-          push_or_update SENTRY_DSN            sensitive
-          push_or_update SENTRY_AUTH_TOKEN     sensitive
-          push_or_update EXPO_PROJECT_ID     sensitive
+          # Dynamically push all environment variables from the .env file to EAS
+          while IFS='=' read -r name value; do
+            if [[ -z "$name" || "$name" == \#* ]]; then
+              continue
+            fi
+
+            # Push each environment variable to EAS as "sensitive"
+            push_or_update "$name" sensitive
+          done < .env
 
       - name: Build on EAS
         run: |
