@@ -83,8 +83,8 @@ jobs:
           echo "Preview of keys in .env:"
           grep -v '^\s*#' .env | cut -d= -f1 | sed 's/^/- /'
 
-          # Let EAS handle parsing .env and pushing all variables
-          eas env:push "${{ inputs.profile }}"
+          # Push variables from .env into the selected EAS environment
+          eas env:push "${{ inputs.profile }}" .env
 
       - name: Build on EAS
         run: |
