@@ -83,11 +83,11 @@ jobs:
           echo "Preview of keys in .env:"
           grep -v '^\s*#' .env | cut -d= -f1 | sed 's/^/- /'
 
-          # EAS CLI expects a file named .env.local
+          # EAS CLI expects .env.local by default
           cp .env .env.local
 
-          # Push using the ONLY supported syntax
-          eas env:push "${{ inputs.profile }}"
+          # Push env vars and overwrite existing ones without prompting
+          eas env:push "${{ inputs.profile }}" --force
 
       - name: Build on EAS
         run: |
