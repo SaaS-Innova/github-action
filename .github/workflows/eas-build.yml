@@ -54,98 +54,37 @@ jobs:
           echo "Loaded env keys:"
           cut -d= -f1 .env | sed 's/^/- /'
 
-          # Load the environment variables into the shell for later use
+          # Load the environment variables into the shell for later use (optional)
           set -a
           source .env
           set +a
 
-          # Dynamically persist all environment variables into $GITHUB_ENV
+          # Dynamically persist all environment variables into $GITHUB_ENV (optional, if you need them later)
           persist () {
             name="$1"; val="${!1:-}"
             if [ -n "$val" ]; then
-              # Persist each variable dynamically into $GITHUB_ENV for later steps
               printf '%s=%s\n' "$name" "$val" >> "$GITHUB_ENV"
             else
               echo "::warning::$name not set; will be missing in later steps"
             fi
           }
 
-          # Loop through all key-value pairs in the .env file and dynamically persist them
           while IFS='=' read -r name value; do
-            # Skip empty lines or comments
             if [[ -z "$name" || "$name" == \#* ]]; then
               continue
             fi
-
-            # Persist each environment variable dynamically
             persist "$name"
           done < .env
 
-      - name: Push env to EAS (create or overwrite)
+      - name: Push env to EAS (from .env file)
         shell: bash
         run: |
-          set -e
+          echo "Pushing .env to EAS environment: ${{ inputs.profile }}"
+          echo "Preview of keys in .env:"
+          grep -v '^\s*#' .env | cut -d= -f1 | sed 's/^/- /'
 
-          push_or_update () {
-            local name="$1"
-            local visibility="$2"
-            local value="$3"
-
-            if [[ -z "$value" ]]; then
-              echo "⚠️  Skip $name (empty value)"
-              return 0
-            fi
-
-            echo "Deploying $name to EAS env: ${{ inputs.profile }} (len=${#value})"
-
-            # Try CREATE first
-            set +e
-            out="$(eas env:create "${{ inputs.profile }}" \
-              --name "$name" \
-              --value "$value" \
-              --visibility "$visibility" \
-              --non-interactive 2>&1)"
-            rc=$?
-            set -e
-
-            if [ $rc -eq 0 ]; then
-              echo "✅ Created $name"
-              return 0
-            fi
-
-            # If it already exists, UPDATE it
-            if echo "$out" | grep -qi "already exists"; then
-              echo "🔁 Updating $name…"
-              eas env:update "${{ inputs.profile }}" \
-                --variable-name "$name" \
-                --value "$value" \
-                --visibility "$visibility" \
-                --non-interactive
-              echo "✅ Updated $name"
-              return 0
-            fi
-
-            echo "::error::Failed to push $name"
-            echo "$out"
-            return $rc
-          }
-
-          echo "🔎 Dumping parsed .env keys and value lengths:"
-          # Read .env SAFELY without shell interpretation
-          while IFS='=' read -r raw_key raw_value; do
-            # skip empty / comment
-            [[ -z "$raw_key" || "$raw_key" == \#* ]] && continue
-
-            # strip trailing CR / spaces from key
-            key="${raw_key%%[[:space:]]*}"
-
-            # strip trailing CR only from value (keep spaces)
-            value="${raw_value%$'\r'}"
-
-            printf '  KEY=[%s] VALUE_LEN=[%s]\n' "$key" "${#value}"
-
-            push_or_update "$key" sensitive "$value"
-          done < .env
+          # Let EAS handle parsing .env and pushing all variables
+          eas env:push "${{ inputs.profile }}" --non-interactive
 
       - name: Build on EAS
         run: |
