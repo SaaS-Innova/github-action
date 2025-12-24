@@ -86,22 +86,23 @@ jobs:
         run: |
           set -e
 
-          # Define the function for pushing or updating the environment variables in EAS
           push_or_update () {
-            local name="$1"; local visibility="$2"; local val="${!1:-}"
+            local name="$1"
+            local visibility="$2"
+            local value="$3"
 
-            if [ -z "$val" ]; then
-              echo "Skip $name (unset)"
+            if [[ -z "$value" ]]; then
+              echo "⚠️  Skip $name (empty value)"
               return 0
             fi
 
             echo "Deploying $name to EAS env: ${{ inputs.profile }}"
 
-            # Try CREATE first (ENV is positional)
+            # Try CREATE first
             set +e
             out="$(eas env:create "${{ inputs.profile }}" \
               --name "$name" \
-              --value "$val" \
+              --value "$value" \
               --visibility "$visibility" \
               --non-interactive 2>&1)"
             rc=$?
@@ -112,12 +113,12 @@ jobs:
               return 0
             fi
 
-            # If it already exists, UPDATE it (ENV is positional; use --variable-name)
+            # If it already exists, UPDATE it
             if echo "$out" | grep -qi "already exists"; then
               echo "🔁 Updating $name…"
               eas env:update "${{ inputs.profile }}" \
                 --variable-name "$name" \
-                --value "$val" \
+                --value "$value" \
                 --visibility "$visibility" \
                 --non-interactive
               echo "✅ Updated $name"
@@ -129,14 +130,14 @@ jobs:
             return $rc
           }
 
-          # Dynamically push all environment variables from the .env file to EAS
-          while IFS='=' read -r name value; do
-            if [[ -z "$name" || "$name" == \#* ]]; then
-              continue
-            fi
+          # Read .env SAFELY without shell interpretation
+          while IFS='=' read -r key raw_value; do
+            [[ -z "$key" || "$key" == \#* ]] && continue
 
-            # Push each environment variable to EAS as "sensitive"
-            push_or_update "$name" sensitive
+            # Preserve the value EXACTLY including special characters
+            value="${raw_value}"
+
+            push_or_update "$key" sensitive "$value"
           done < .env
 
       - name: Build on EAS
