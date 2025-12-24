@@ -96,7 +96,7 @@ jobs:
               return 0
             fi
 
-            echo "Deploying $name to EAS env: ${{ inputs.profile }}"
+            echo "Deploying $name to EAS env: ${{ inputs.profile }} (len=${#value})"
 
             # Try CREATE first
             set +e
@@ -130,12 +130,19 @@ jobs:
             return $rc
           }
 
+          echo "🔎 Dumping parsed .env keys and value lengths:"
           # Read .env SAFELY without shell interpretation
-          while IFS='=' read -r key raw_value; do
-            [[ -z "$key" || "$key" == \#* ]] && continue
+          while IFS='=' read -r raw_key raw_value; do
+            # skip empty / comment
+            [[ -z "$raw_key" || "$raw_key" == \#* ]] && continue
 
-            # Preserve the value EXACTLY including special characters
-            value="${raw_value}"
+            # strip trailing CR / spaces from key
+            key="${raw_key%%[[:space:]]*}"
+
+            # strip trailing CR only from value (keep spaces)
+            value="${raw_value%$'\r'}"
+
+            printf '  KEY=[%s] VALUE_LEN=[%s]\n' "$key" "${#value}"
 
             push_or_update "$key" sensitive "$value"
           done < .env
