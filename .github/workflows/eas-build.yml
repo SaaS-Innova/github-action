@@ -84,7 +84,7 @@ jobs:
           grep -v '^\s*#' .env | cut -d= -f1 | sed 's/^/- /'
 
           # Let EAS handle parsing .env and pushing all variables
-          eas env:push "${{ inputs.profile }}" --non-interactive
+          eas env:push "${{ inputs.profile }}"
 
       - name: Build on EAS
         run: |
