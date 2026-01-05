@@ -168,6 +168,9 @@ jobs:
       - name: check runner process.env (booleans only)
         shell: bash
         run: |
+          set -a
+          source .env
+          set +a
           node -e "
             console.log('EXPO_PROJECT_ID present?', !!process.env.EXPO_PROJECT_ID);
             console.log('REACT_APP_GRAPHQL_URL present?', !!process.env.REACT_APP_GRAPHQL_URL);
