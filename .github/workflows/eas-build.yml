@@ -76,113 +76,23 @@ jobs:
             persist "$name"
           done < .env
 
-      - name: verify .env keys + required keys present
-        shell: bash
-        run: |
-          echo "===== DEBUG A: .env sanity ====="
-          echo "Repo root contents:"
-          ls -la
-
-          echo "----- .env exists? -----"
-          ls -la .env || true
-
-          echo "----- .env key count -----"
-          if [ -f .env ]; then
-            grep -v '^\s*#' .env | grep -v '^\s*$' | cut -d= -f1 | wc -l
-          fi
-
-          echo "----- Keys in .env (NO VALUES) -----"
-          if [ -f .env ]; then
-            grep -v '^\s*#' .env | grep -v '^\s*$' | cut -d= -f1 | sed 's/^/- /'
-          fi
-
-          echo "----- Required keys check (lines with key=, values hidden by CI anyway) -----"
-          if [ -f .env ]; then
-            grep -E '^(EXPO_PROJECT_ID|REACT_APP_GRAPHQL_URL|REACT_APP_PUBLIC_URL|GOOGLE_MAPS_API_KEY|SENTRY_DSN)=' .env || true
-          fi
-
-          echo "----- Missing/empty required keys -----"
-          missing=0
-          for k in EXPO_PROJECT_ID REACT_APP_GRAPHQL_URL REACT_APP_PUBLIC_URL GOOGLE_MAPS_API_KEY SENTRY_DSN; do
-            val="$(grep -E "^${k}=" .env | head -n1 | cut -d= -f2- || true)"
-            if [ -z "$val" ]; then
-              echo "::warning::$k is missing or empty in .env"
-              missing=1
-            fi
-          done
-          if [ "$missing" -eq 1 ]; then
-            echo "::warning::One or more required keys are missing/empty in .env"
-          fi
-
       - name: Push env to EAS (from .env file)
         shell: bash
         run: |
-          echo "===== Pushing .env to EAS environment: ${{ inputs.profile }} ====="
+          echo "Pushing .env to EAS environment: ${{ inputs.profile }}"
+          echo "Preview of keys in .env:"
+          grep -v '^\s*#' .env | cut -d= -f1 | sed 's/^/- /'
 
-          echo "Preview of keys in .env (NO VALUES):"
-          grep -v '^\s*#' .env | grep -v '^\s*$' | cut -d= -f1 | sed 's/^/- /'
-
-          # EAS CLI expects .env.local by default, but we pass --path explicitly too
+          # EAS CLI expects .env.local by default
           cp .env .env.local
 
           # Push env vars and overwrite existing ones without prompting
-          eas env:push --environment "${{ inputs.profile }}" --path .env.local --force --non-interactive
-
-      - name: list EAS env after push
-        shell: bash
-        run: |
-          echo "===== DEBUG B: eas env:list for ${{ inputs.profile }} ====="
-          eas env:list --environment "${{ inputs.profile }}" || true
-
-          echo "----- Check required keys appear in EAS env:list output -----"
-          eas env:list --environment "${{ inputs.profile }}" | grep -E 'EXPO_PROJECT_ID|REACT_APP_GRAPHQL_URL|REACT_APP_PUBLIC_URL|GOOGLE_MAPS_API_KEY|SENTRY_DSN' || true
-
-      - name: inspect expo config output shape + extra presence
-        shell: bash
-        run: |
-          echo "===== DEBUG C: inspect expo config output ====="
-          npx expo config --json > expo-config.json
-
-          node -e "
-            const cfg=require('./expo-config.json');
-            console.log('Top-level keys:', Object.keys(cfg));
-
-            // Try common locations
-            const expo1 = cfg.expo;
-            const expo2 = cfg.exp;
-            const expo3 = cfg.projectConfig?.expoConfig;
-            const expo4 = cfg.projectConfig?.exp;
-
-            const expo = expo1 || expo2 || expo3 || expo4;
-
-            console.log('Found expo config?', !!expo);
-            if (!expo) process.exit(0);
-
-            const extra = expo.extra || {};
-            console.log('extra.eas.projectId present?', !!extra?.eas?.projectId);
-            console.log('extra.publicUrl present?', !!extra?.publicUrl);
-            console.log('extra.graphQlUrl present?', !!extra?.graphQlUrl);
-            console.log('extra.sentryDsn present?', !!extra?.sentryDsn);
-          "
-
-      - name: check runner process.env (booleans only)
-        shell: bash
-        run: |
-          set -a
-          source .env
-          set +a
-          node -e "
-            console.log('EXPO_PROJECT_ID present?', !!process.env.EXPO_PROJECT_ID);
-            console.log('REACT_APP_GRAPHQL_URL present?', !!process.env.REACT_APP_GRAPHQL_URL);
-            console.log('REACT_APP_PUBLIC_URL present?', !!process.env.REACT_APP_PUBLIC_URL);
-            console.log('GOOGLE_MAPS_API_KEY present?', !!process.env.GOOGLE_MAPS_API_KEY);
-            console.log('SENTRY_DSN present?', !!process.env.SENTRY_DSN);
-          "
+          eas env:push "${{ inputs.profile }}" --force
 
       - name: Build on EAS
         run: |
           if [[ "${{ inputs.platform }}" == "all" ]]; then
-            eas build --platform android --profile ${{ inputs.profile }}  --non-interactive --no-wait
+            eas build --platform android --profile ${{ inputs.profile }} --non-interactive --no-wait
             eas build --platform ios --profile ${{ inputs.profile }} --non-interactive --no-wait
           else
             eas build --platform ${{ inputs.platform }} --profile ${{ inputs.profile }} --non-interactive --no-wait
