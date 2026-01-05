@@ -137,19 +137,43 @@ jobs:
           echo "----- Check required keys appear in EAS env:list output -----"
           eas env:list --environment "${{ inputs.profile }}" | grep -E 'EXPO_PROJECT_ID|REACT_APP_GRAPHQL_URL|REACT_APP_PUBLIC_URL|GOOGLE_MAPS_API_KEY|SENTRY_DSN' || true
 
-      - name: expo config extras presence (safe booleans)
+      - name: inspect expo config output shape + extra presence
         shell: bash
         run: |
-          echo "===== DEBUG C: expo config extra presence ====="
-          # This evaluates app.config.js and prints booleans (no secret values)
-          npx expo config --json | node -e "
-            const fs=require('fs');
-            const cfg=JSON.parse(fs.readFileSync(0,'utf8'));
-            const extra=cfg?.expo?.extra || {};
+          echo "===== DEBUG C: inspect expo config output ====="
+          npx expo config --json > expo-config.json
+
+          node -e "
+            const cfg=require('./expo-config.json');
+            console.log('Top-level keys:', Object.keys(cfg));
+
+            // Try common locations
+            const expo1 = cfg.expo;
+            const expo2 = cfg.exp;
+            const expo3 = cfg.projectConfig?.expoConfig;
+            const expo4 = cfg.projectConfig?.exp;
+
+            const expo = expo1 || expo2 || expo3 || expo4;
+
+            console.log('Found expo config?', !!expo);
+            if (!expo) process.exit(0);
+
+            const extra = expo.extra || {};
             console.log('extra.eas.projectId present?', !!extra?.eas?.projectId);
             console.log('extra.publicUrl present?', !!extra?.publicUrl);
             console.log('extra.graphQlUrl present?', !!extra?.graphQlUrl);
             console.log('extra.sentryDsn present?', !!extra?.sentryDsn);
+          "
+
+      - name: check runner process.env (booleans only)
+        shell: bash
+        run: |
+          node -e "
+            console.log('EXPO_PROJECT_ID present?', !!process.env.EXPO_PROJECT_ID);
+            console.log('REACT_APP_GRAPHQL_URL present?', !!process.env.REACT_APP_GRAPHQL_URL);
+            console.log('REACT_APP_PUBLIC_URL present?', !!process.env.REACT_APP_PUBLIC_URL);
+            console.log('GOOGLE_MAPS_API_KEY present?', !!process.env.GOOGLE_MAPS_API_KEY);
+            console.log('SENTRY_DSN present?', !!process.env.SENTRY_DSN);
           "
 
       - name: Build on EAS
