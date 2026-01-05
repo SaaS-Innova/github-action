@@ -54,130 +54,91 @@ jobs:
           echo "Loaded env keys:"
           cut -d= -f1 .env | sed 's/^/- /'
 
-          # Load the environment variables into the shell for later use (optional)
+          # Load the environment variables into the shell for later use
           set -a
           source .env
           set +a
 
-          # Dynamically persist all environment variables into $GITHUB_ENV (optional, if you need them later)
+          # Dynamically persist all environment variables into $GITHUB_ENV
           persist () {
             name="$1"; val="${!1:-}"
             if [ -n "$val" ]; then
+              # Persist each variable dynamically into $GITHUB_ENV for later steps
               printf '%s=%s\n' "$name" "$val" >> "$GITHUB_ENV"
             else
               echo "::warning::$name not set; will be missing in later steps"
             fi
           }
 
+          # Loop through all key-value pairs in the .env file and dynamically persist them
           while IFS='=' read -r name value; do
+            # Skip empty lines or comments
             if [[ -z "$name" || "$name" == \#* ]]; then
               continue
             fi
+
+            # Persist each environment variable dynamically
             persist "$name"
           done < .env
 
-      - name: verify .env keys + required keys present
+      - name: Push env to EAS (create or overwrite)
         shell: bash
         run: |
-          echo "===== DEBUG A: .env sanity ====="
-          echo "Repo root contents:"
-          ls -la
+          set -e
 
-          echo "----- .env exists? -----"
-          ls -la .env || true
+          push_or_update () {
+            local name="$1"
+            local visibility="$2"
+            local value="$3"
 
-          echo "----- .env key count -----"
-          if [ -f .env ]; then
-            grep -v '^\s*#' .env | grep -v '^\s*$' | cut -d= -f1 | wc -l
-          fi
-
-          echo "----- Keys in .env (NO VALUES) -----"
-          if [ -f .env ]; then
-            grep -v '^\s*#' .env | grep -v '^\s*$' | cut -d= -f1 | sed 's/^/- /'
-          fi
-
-          echo "----- Required keys check (lines with key=, values hidden by CI anyway) -----"
-          if [ -f .env ]; then
-            grep -E '^(EXPO_PROJECT_ID|REACT_APP_GRAPHQL_URL|REACT_APP_PUBLIC_URL|GOOGLE_MAPS_API_KEY|SENTRY_DSN)=' .env || true
-          fi
-
-          echo "----- Missing/empty required keys -----"
-          missing=0
-          for k in EXPO_PROJECT_ID REACT_APP_GRAPHQL_URL REACT_APP_PUBLIC_URL GOOGLE_MAPS_API_KEY SENTRY_DSN; do
-            val="$(grep -E "^${k}=" .env | head -n1 | cut -d= -f2- || true)"
-            if [ -z "$val" ]; then
-              echo "::warning::$k is missing or empty in .env"
-              missing=1
+            if [[ -z "$value" ]]; then
+              echo "⚠️  Skip $name (empty value)"
+              return 0
             fi
-          done
-          if [ "$missing" -eq 1 ]; then
-            echo "::warning::One or more required keys are missing/empty in .env"
-          fi
 
-      - name: Push env to EAS (from .env file)
-        shell: bash
-        run: |
-          echo "===== Pushing .env to EAS environment: ${{ inputs.profile }} ====="
+            echo "Deploying $name to EAS env: ${{ inputs.profile }}"
 
-          echo "Preview of keys in .env (NO VALUES):"
-          grep -v '^\s*#' .env | grep -v '^\s*$' | cut -d= -f1 | sed 's/^/- /'
+            # Try CREATE first
+            set +e
+            out="$(eas env:create "${{ inputs.profile }}" \
+              --name "$name" \
+              --value "$value" \
+              --visibility "$visibility" \
+              --non-interactive 2>&1)"
+            rc=$?
+            set -e
 
-          # EAS CLI expects .env.local by default, but we pass --path explicitly too
-          cp .env .env.local
+            if [ $rc -eq 0 ]; then
+              echo "✅ Created $name"
+              return 0
+            fi
 
-          # Push env vars and overwrite existing ones without prompting
-          eas env:push --environment "${{ inputs.profile }}" --path .env.local --force --non-interactive
+            # If it already exists, UPDATE it
+            if echo "$out" | grep -qi "already exists"; then
+              echo "🔁 Updating $name…"
+              eas env:update "${{ inputs.profile }}" \
+                --variable-name "$name" \
+                --value "$value" \
+                --visibility "$visibility" \
+                --non-interactive
+              echo "✅ Updated $name"
+              return 0
+            fi
 
-      - name: list EAS env after push
-        shell: bash
-        run: |
-          echo "===== DEBUG B: eas env:list for ${{ inputs.profile }} ====="
-          eas env:list --environment "${{ inputs.profile }}" || true
+            echo "::error::Failed to push $name"
+            echo "$out"
+            return $rc
+          }
 
-          echo "----- Check required keys appear in EAS env:list output -----"
-          eas env:list --environment "${{ inputs.profile }}" | grep -E 'EXPO_PROJECT_ID|REACT_APP_GRAPHQL_URL|REACT_APP_PUBLIC_URL|GOOGLE_MAPS_API_KEY|SENTRY_DSN' || true
+          # Read .env SAFELY without shell interpretation
+          while IFS='=' read -r key raw_value; do
+            [[ -z "$key" || "$key" == \#* ]] && continue
 
-      - name: inspect expo config output shape + extra presence
-        shell: bash
-        run: |
-          echo "===== DEBUG C: inspect expo config output ====="
-          npx expo config --json > expo-config.json
+            # Preserve the value EXACTLY including special characters
+            value="${raw_value}"
 
-          node -e "
-            const cfg=require('./expo-config.json');
-            console.log('Top-level keys:', Object.keys(cfg));
-
-            // Try common locations
-            const expo1 = cfg.expo;
-            const expo2 = cfg.exp;
-            const expo3 = cfg.projectConfig?.expoConfig;
-            const expo4 = cfg.projectConfig?.exp;
-
-            const expo = expo1 || expo2 || expo3 || expo4;
-
-            console.log('Found expo config?', !!expo);
-            if (!expo) process.exit(0);
-
-            const extra = expo.extra || {};
-            console.log('extra.eas.projectId present?', !!extra?.eas?.projectId);
-            console.log('extra.publicUrl present?', !!extra?.publicUrl);
-            console.log('extra.graphQlUrl present?', !!extra?.graphQlUrl);
-            console.log('extra.sentryDsn present?', !!extra?.sentryDsn);
-          "
-
-      - name: check runner process.env (booleans only)
-        shell: bash
-        run: |
-          set -a
-          source .env
-          set +a
-          node -e "
-            console.log('EXPO_PROJECT_ID present?', !!process.env.EXPO_PROJECT_ID);
-            console.log('REACT_APP_GRAPHQL_URL present?', !!process.env.REACT_APP_GRAPHQL_URL);
-            console.log('REACT_APP_PUBLIC_URL present?', !!process.env.REACT_APP_PUBLIC_URL);
-            console.log('GOOGLE_MAPS_API_KEY present?', !!process.env.GOOGLE_MAPS_API_KEY);
-            console.log('SENTRY_DSN present?', !!process.env.SENTRY_DSN);
-          "
+            push_or_update "$key" sensitive "$value"
+          done < .env
 
       - name: Build on EAS
         run: |
