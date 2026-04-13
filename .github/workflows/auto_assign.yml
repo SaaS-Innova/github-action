@@ -1,4 +1,4 @@
-name: 'Auto Assign'
+name: "Auto Assign"
 on:
   workflow_call:
     inputs:
@@ -8,53 +8,70 @@ on:
         description: "Comma-separated list of reviewers"
     secrets:
       token_for_github_api:
-        description: 'Token to use for GitHub API'
+        description: "Token to use for GitHub API"
         required: true
+      ANTHROPIC_API_KEY:
+        description: "API key for Anthropic's Claude"
+        required: false
 
 jobs:
   assign-reviewers:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-    
-    - name: Check Branch Protection & General Repository Settings
-      uses: 'SaaS-Innova/github-action@main'
-      with:
-        repository: ${{ github.repository }}
-        token_for_github_api: ${{ secrets.token_for_github_api }}
-    
-    - name: Assign PR Creator as Assignee
-      uses: actions/github-script@v6
-      with:
-        script: |
-          const prAuthor = context.payload.pull_request.user.login;
-          console.log(`Assigning ${prAuthor} as the PR assignee.`);
-          await github.rest.issues.addAssignees({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: context.payload.pull_request.number,
-            assignees: [prAuthor],
-          });
+      - name: Check Branch Protection & General Repository Settings
+        uses: "SaaS-Innova/github-action@main"
+        with:
+          repository: ${{ github.repository }}
+          token_for_github_api: ${{ secrets.token_for_github_api }}
 
-    - name: Assign Reviewers
-      uses: actions/github-script@v6
-      with:
-        script: |
-          const reviewers = "${{ inputs.reviewers }}".split(',').map(r => r.trim()); // Parse input
-          console.log("Reviewers to assign:", reviewers);
-          const prAuthor = context.payload.pull_request.user.login; // Get PR author
-          console.log("PR Author:", prAuthor);
-          const filteredReviewers = reviewers.filter(r => r !== prAuthor); // Exclude PR author
-          console.log("Filtered Reviewers:", filteredReviewers);
-          if (filteredReviewers.length === 0) {
-            console.log("No valid reviewers to assign.");
-            return; // Exit if no valid reviewers
-          }
-          await github.rest.pulls.requestReviewers({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            pull_number: context.payload.pull_request.number,
-            reviewers: filteredReviewers,
-          });
-  
+      - name: Assign PR Creator as Assignee
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prAuthor = context.payload.pull_request.user.login;
+            console.log(`Assigning ${prAuthor} as the PR assignee.`);
+            await github.rest.issues.addAssignees({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              assignees: [prAuthor],
+            });
 
+      - name: Assign Reviewers
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const reviewers = "${{ inputs.reviewers }}".split(',').map(r => r.trim()); // Parse input
+            console.log("Reviewers to assign:", reviewers);
+            const prAuthor = context.payload.pull_request.user.login; // Get PR author
+            console.log("PR Author:", prAuthor);
+            const filteredReviewers = reviewers.filter(r => r !== prAuthor); // Exclude PR author
+            console.log("Filtered Reviewers:", filteredReviewers);
+            if (filteredReviewers.length === 0) {
+              console.log("No valid reviewers to assign.");
+              return; // Exit if no valid reviewers
+            }
+            await github.rest.pulls.requestReviewers({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              reviewers: filteredReviewers,
+            });
+
+      - name: Claude PR Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Review this pull request for:
+            - correctness
+            - bugs
+            - security issues
+            - breaking changes
+            - risky edge cases
+
+            Focus on actionable findings only.
+            Analyze the PR diff in the context of the repository and post review comments or a concise summary.
+          claude_args: |
+            --max-turns 5
