@@ -10,9 +10,9 @@ on:
       token_for_github_api:
         description: "Token to use for GitHub API"
         required: true
-      ANTHROPIC_API_KEY:
-        description: "API key for Anthropic's Claude"
-        required: false
+      # ANTHROPIC_API_KEY:
+      #   description: "API key for Anthropic's Claude"
+      #   required: false
 
 jobs:
   assign-reviewers:
@@ -59,19 +59,19 @@ jobs:
               reviewers: filteredReviewers,
             });
 
-      - name: Claude PR Review
-        uses: anthropics/claude-code-action@v1
-        with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          prompt: |
-            Review this pull request for:
-            - correctness
-            - bugs
-            - security issues
-            - breaking changes
-            - risky edge cases
+      # - name: Claude PR Review
+      #   uses: anthropics/claude-code-action@v1
+      #   with:
+      #     anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+      #     prompt: |
+      #       Review this pull request for:
+      #       - correctness
+      #       - bugs
+      #       - security issues
+      #       - breaking changes
+      #       - risky edge cases
 
-            Focus on actionable findings only.
-            Analyze the PR diff in the context of the repository and post review comments or a concise summary.
-          claude_args: |
-            --max-turns 5
+      #       Focus on actionable findings only.
+      #       Analyze the PR diff in the context of the repository and post review comments or a concise summary.
+      #     claude_args: |
+      #       --max-turns 5
