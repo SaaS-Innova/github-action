@@ -100,4 +100,4 @@ jobs:
       - name: Submit to Play Store (optional)
         if: ${{ inputs.submit && inputs.environment == 'production' }}
         run: |
-          eas submit -p ${{ inputs.platform }} --latest --profile ${{ inputs.profile }} --non-interactive
+          eas submit -p ${{ inputs.platform }} --latest --profile ${{ inputs.profile }} --non-interactive --no-wait
