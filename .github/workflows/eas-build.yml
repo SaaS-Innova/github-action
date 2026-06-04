@@ -103,6 +103,25 @@ jobs:
           echo "Release notes:"
           cat release-notes/en-US.txt
 
+      - name: Auto-increment version (production only)
+        if: ${{ inputs.environment == 'production' }}
+        shell: bash
+        run: |
+          node -e "
+            const fs = require('fs');
+            const content = fs.readFileSync('app.config.js', 'utf8');
+            const match = content.match(/version:\s*['\"](\d+)\.(\d+)\.(\d+)['\"]/);
+            if (!match) { console.error('Could not find version in app.config.js'); process.exit(1); }
+            const [_, major, minor, patch] = match;
+            const newVersion = major + '.' + minor + '.' + (parseInt(patch) + 1);
+            const updated = content.replace(
+              /version:\s*['\"](\d+\.\d+\.\d+)['\"]/,
+              'version: \"' + newVersion + '\"'
+            );
+            fs.writeFileSync('app.config.js', updated);
+            console.log('Version bumped from ' + match[1] + '.' + match[2] + '.' + match[3] + ' to ' + newVersion);
+          "
+
       - name: Build on EAS
         run: |
           if [[ "${{ inputs.platform }}" == "all" ]]; then
