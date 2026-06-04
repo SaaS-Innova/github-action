@@ -16,6 +16,10 @@ on:
         required: false
         type: boolean
         default: false # Only submit on production
+      release_notes:
+        required: false
+        type: string
+        default: "Bug fixes and performance improvements."
     secrets:
       EXPO_TOKEN:
         required: true
@@ -87,6 +91,15 @@ jobs:
           cp .env .env.local 
           # Push env vars and overwrite existing ones without prompting
           eas env:push "${{ inputs.profile }}" --force
+
+      - name: Write release notes for Play Store
+        if: ${{ inputs.submit && inputs.environment == 'production' }}
+        shell: bash
+        run: |
+          mkdir -p release-notes
+          printf '%s' "${{ inputs.release_notes }}" > release-notes/en-US.txt
+          echo "Release notes:"
+          cat release-notes/en-US.txt
 
       - name: Build on EAS
         run: |
