@@ -25,6 +25,8 @@ on:
         required: true
       DOTENV_ME:
         required: false
+      ASC_APP_ID:
+        required: false
 
 jobs:
   build:
@@ -112,5 +114,13 @@ jobs:
 
       - name: Submit to Play Store (optional)
         if: ${{ inputs.submit && inputs.environment == 'production' }}
+        env:
+          ASC_APP_ID: ${{ secrets.ASC_APP_ID }}
         run: |
-          eas submit -p ${{ inputs.platform }} --latest --profile ${{ inputs.profile }} --non-interactive --no-wait
+          IOS_FLAG=""
+          if [[ "${{ inputs.platform }}" == "ios" || "${{ inputs.platform }}" == "all" ]]; then
+            if [[ -n "$ASC_APP_ID" ]]; then
+              IOS_FLAG="--asc-app-id $ASC_APP_ID"
+            fi
+          fi
+          eas submit -p ${{ inputs.platform }} --latest --profile ${{ inputs.profile }} --non-interactive --no-wait $IOS_FLAG
