@@ -53,7 +53,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres
+        image: postgres:16-alpine
         env:
           POSTGRES_PASSWORD: ${{ inputs.db_password }}
           POSTGRES_USER: ${{ inputs.db_username }}
@@ -67,7 +67,7 @@ jobs:
           - ${{ inputs.db_port }}:5432
 
       redis:
-        image: redis
+        image: redis:7-alpine
         options: >-
           --health-cmd "redis-cli ping || exit 1"
           --health-interval 10s
@@ -83,14 +83,14 @@ jobs:
           repository: ${{ github.repository }}
           token_for_github_api: ${{ secrets.token_for_github_api }}
           
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ secrets.token_for_github_api }}
           submodules: true
 
       - name: Setup Node.js
         id: install-node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.node_version }}
           cache: 'npm'

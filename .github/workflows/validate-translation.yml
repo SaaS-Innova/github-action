@@ -19,12 +19,12 @@ jobs:
           token_for_github_api: ${{ secrets.token_for_github_api }}
 
       - name: Checkout calling repository (Caller Repo)
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: ${{ github.workspace }}
 
       - name: Checkout reusable workflow repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: 'SaaS-Innova/github-action'
           path: 'SaaS-Innova/github-action'
