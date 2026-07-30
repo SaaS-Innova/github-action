@@ -1,4 +1,4 @@
-name: 'Test Build App Workflow'
+name: "Test Build App Workflow"
 
 on:
   workflow_call:
@@ -6,18 +6,18 @@ on:
       graphql_url:
         required: true
         type: string
-        description: 'The GraphQL endpoint URL'
+        description: "The GraphQL endpoint URL"
       public_url:
         required: true
         type: string
-        description: 'The public URL for the React app'
+        description: "The public URL for the React app"
       document_server_url:
         required: false
         type: string
-        description: 'The Document Server URL (optional)'
+        description: "The Document Server URL (optional)"
     secrets:
       token_for_github_api:
-        description: 'Token to use for GitHub API'
+        description: "Token to use for GitHub API"
         required: true
 
 jobs:
@@ -26,7 +26,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Check Branch Protection & General Repository Settings
-        uses: 'SaaS-Innova/github-action@main'
+        uses: "SaaS-Innova/github-action@main"
         with:
           repository: ${{ github.repository }}
           token_for_github_api: ${{ secrets.token_for_github_api }}
@@ -44,12 +44,12 @@ jobs:
             echo "REACT_APP_DOCUMENT_SERVER_URL=${{ inputs.document_server_url }}" >> .env
           fi
 
-      - name: Setup Node.js 22
+      - name: Setup Node.js 24
         id: install-node
         uses: actions/setup-node@v4
         with:
           node-version: 24.18.0
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install Dependencies
         run: npm install

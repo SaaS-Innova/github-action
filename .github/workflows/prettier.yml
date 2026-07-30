@@ -1,17 +1,17 @@
-name: 'Prettier dry run'
+name: "Prettier dry run"
 
 # This makes the workflow reusable
 on:
-  workflow_call:  # Add this line
+  workflow_call: # Add this line
     inputs:
       prettier_options:
-        description: 'Options to pass to Prettier'
+        description: "Options to pass to Prettier"
         required: false
-        default: '--check **/*.tsx'
+        default: "--check **/*.tsx"
         type: string
     secrets:
       token_for_github_api:
-        description: 'Token to use for GitHub API'
+        description: "Token to use for GitHub API"
         required: true
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Check Branch Protection & General Repository Settings
-        uses: 'SaaS-Innova/github-action@main'
+        uses: "SaaS-Innova/github-action@main"
         with:
           repository: ${{ github.repository }}
           token_for_github_api: ${{ secrets.token_for_github_api }}
@@ -32,7 +32,7 @@ jobs:
           ref: ${{ github.head_ref }}
 
       - name: Prettify code
-        uses: creyD/prettier_action@v4.3
+        uses: creyD/prettier_action@v4.6
         with:
           dry: True
           only_changed: true
