@@ -10,6 +10,7 @@ const requiredTopLevelKeys = [
   "components",
   "metadata",
   "auth",
+  "faq",
 ];
 
 const allowedKeys = ["headingLabels", "attributes", "messages", "extraInfo"];
@@ -93,7 +94,7 @@ function isCamelCase(str) {
 function validateKeysAndValues(jsonObj) {
   const seenKeys = new Set();
   let isValid = true;
-  const capitalizedAllowedPrefixes = ["components.", "auth."];
+  const capitalizedAllowedPrefixes = ["components.", "auth.", "faq."];
   const capitalizedAllowedIncludes = [".messages."];
   function traverse(obj, prefix = "") {
     Object.entries(obj).forEach(([key, value]) => {
