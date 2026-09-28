@@ -10,8 +10,11 @@ const requiredTopLevelKeys = [
   "components",
   "metadata",
   "auth",
-  "faq",
 ];
+
+// Allowed if present, but not every PR/repo has these yet, so they aren't
+// required.
+const optionalTopLevelKeys = ["faq"];
 
 const allowedKeys = ["headingLabels", "attributes", "messages", "extraInfo"];
 
@@ -49,7 +52,8 @@ function validateObjectStructure(jsonObj) {
 
   // Check for unexpected keys
   const unexpectedKeys = actualKeys.filter(
-    (key) => !requiredTopLevelKeys.includes(key)
+    (key) =>
+      !requiredTopLevelKeys.includes(key) && !optionalTopLevelKeys.includes(key)
   );
   if (unexpectedKeys.length > 0) {
     console.error(
