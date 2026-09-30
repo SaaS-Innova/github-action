@@ -105,4 +105,23 @@ jobs:
         run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} &&  source ~/.bashrc && DOTENV_KEY=${{ secrets.DOTENV_KEY }} NODE_OPTIONS='-r dotenv/config' ${{ inputs.NODE_PATH }}npm run migration:run"
 
       - name: Glesys server, restart PM2
-        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && DOTENV_KEY=${{ secrets.DOTENV_KEY }} NODE_OPTIONS='-r dotenv/config' ${{ inputs.NODE_PATH }}pm2 restart ${{ inputs.PM2_NAME }} --update-env && pm2 save"
+        run: |
+          case "${{ inputs.PM2_NAME }}" in
+            "")
+              echo "PM2_NAME is empty" && exit 1
+              ;;
+            *.js|*.cjs|*.json|*.yml|*.yaml)
+              # Config file passed → old behaviour (other projects, unchanged)
+              CMD="${{ inputs.NODE_PATH }}pm2 restart ${{ inputs.PM2_NAME }} --update-env"
+              ;;
+            *)
+              # App names passed → new behaviour: reload each app by name
+              CMD=""
+              for app in ${{ inputs.PM2_NAME }}; do
+                CMD="$CMD ${{ inputs.NODE_PATH }}pm2 reload $app --update-env &&"
+              done
+              CMD="${CMD% &&}"
+              ;;
+          esac
+          echo "Running: $CMD"
+          sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && export DOTENV_KEY=${{ secrets.DOTENV_KEY }} NODE_OPTIONS='-r dotenv/config' && $CMD && pm2 save"
