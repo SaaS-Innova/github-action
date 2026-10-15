@@ -106,3 +106,6 @@ jobs:
 
       - name: Glesys server, restart PM2
         run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && DOTENV_KEY=${{ secrets.DOTENV_KEY }} NODE_OPTIONS='-r dotenv/config' ${{ inputs.NODE_PATH }}pm2 restart ${{ inputs.PM2_NAME }} --update-env && pm2 save"
+
+      - name: Glesys server, reload PM2 apps one by one
+        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && export DOTENV_KEY=${{ secrets.DOTENV_KEY }} && for app in \$(${{ inputs.NODE_PATH }}node -p \"require('./${{ inputs.PM2_NAME }}').apps.map(a => a.name).join(' ')\"); do NODE_OPTIONS='-r dotenv/config' ${{ inputs.NODE_PATH }}pm2 reload \$app --update-env; done && pm2 save"
